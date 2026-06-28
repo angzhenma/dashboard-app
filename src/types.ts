@@ -8,3 +8,20 @@ export interface SecurityThreat {
   detectedTime: string;
   status: 'Active' | 'Mitigated' | 'Suspended';
 }
+export interface PieChartData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface BarChartData {
+  severity: 'Critical' | 'High' | 'Medium' | 'Low' | 'False Positive';
+  count: number;
+}
+
+export interface DashboardMetrics {
+  totalThreats: number;
+  criticalCount: number;
+  activeAnyDeskInstances: number;
+  activeRdpConnections: number;
+}

@@ -1,13 +1,14 @@
 :root {
-  --soc-bg: #090D16;       /* Deep tech-black background */
-  --soc-card: #131A26;     /* Dark slate component card */
-  --soc-border: #222F47;   /* Clean grid line border */
-  --soc-text: #E2E8F0;     /* Primary text color */
+  --soc-bg: #090D16;
+  --soc-card: #131A26;
+  --soc-border: #222F47;
+  --soc-text: #E2E8F0;
   
   /* Status alert colors */
-  --soc-red: #EF4444;      /* Critical threat */
-  --soc-yellow: #F59E0B;   /* Warning/Suspicious */
-  --soc-green: #10B981;    /* Protected/Safe */
+  --soc-red: #EF4444;
+  --soc-yellow: #F59E0B;
+  --soc-green: #10B981;
+  --soc-blue: #3B82F6;
 }
 
 body {
@@ -18,7 +19,6 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom scrollbars for a clean look */
 ::-webkit-scrollbar {
   width: 8px;
 }

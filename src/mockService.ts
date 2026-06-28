@@ -1,4 +1,4 @@
-import type { SecurityThreat } from './types';
+import type { SecurityThreat, PieChartData, BarChartData, DashboardMetrics } from './types';
 
 export const fetchMockThreats = (): Promise<SecurityThreat[]> => {
   return new Promise((resolve) => {
@@ -37,4 +37,57 @@ export const fetchMockThreats = (): Promise<SecurityThreat[]> => {
       ]);
     }, 500);
   });
+};
+
+export const fetchThreatsTypeData = (): Promise<PieChartData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { name: 'Malware', value: 35, color: '#F472B6' }, // Pink
+        { name: 'Ransomware', value: 15, color: '#E879F9' }, // Fuchsia
+        { name: 'RDP Exploit', value: 25, color: '#C084FC' }, // Purple
+        { name: 'Shadow IT', value: 10, color: '#A78BFA' }, // Violet
+        { name: 'Phishing', value: 15, color: '#818CF8' }  // Indigo
+      ]);
+    }, 600);
+  });
+};
+
+export const fetchUnresolvedStatusData = (): Promise<PieChartData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { name: 'Not Mitigated', value: 45, color: 'var(--soc-red)' },
+        { name: 'Mitigated (Pending)', value: 35, color: 'var(--soc-yellow)' },
+        { name: 'Under Investigation', value: 20, color: '#38BDF8' } // Light Blue
+      ]);
+    }, 600);
+  });
+};
+
+export const fetchThreatsSeverityData = (): Promise<BarChartData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { severity: 'Critical', count: 12 },
+        { severity: 'High', count: 28 },
+        { severity: 'Medium', count: 45 },
+        { severity: 'Low', count: 32 },
+        { severity: 'False Positive', count: 18 }
+      ]);
+    }, 700);
+  });
+};
+
+export const fetchDashboardMetrics = (): Promise<DashboardMetrics> => {
+    return new Promise((resolve) => {
+        setTimeout(() => {
+            resolve({
+                totalThreats: 135,
+                criticalCount: 12,
+                activeAnyDeskInstances: 8,
+                activeRdpConnections: 15
+            });
+        }, 500);
+    });
 };
