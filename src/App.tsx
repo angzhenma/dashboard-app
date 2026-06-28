@@ -69,11 +69,11 @@ export default function App() {
       case "High":
         return "var(--soc-yellow)";
       case "Medium":
-        return "#38BDF8"; // Blue
+        return "#38BDF8";
       case "Low":
         return "var(--soc-green)";
       default:
-        return "#64748B"; // Grey for False Positive
+        return "#64748B";
     }
   };
 
