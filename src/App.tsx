@@ -5,7 +5,7 @@ import {
   fetchUnresolvedStatusData,
   fetchThreatsSeverityData,
   fetchDashboardMetrics,
-} from "./mockService";
+} from "./mockData";
 import type {
   SecurityThreat,
   PieChartData,
@@ -33,7 +33,6 @@ import {
 } from "recharts";
 
 export default function App() {
-  // State for data
   const [threats, setThreats] = useState<SecurityThreat[]>([]);
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
   const [threatsTypeData, setThreatsTypeData] = useState<PieChartData[]>([]);
@@ -44,11 +43,9 @@ export default function App() {
     BarChartData[]
   >([]);
 
-  // State for loading
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch all data in parallel
     Promise.all([
       fetchMockThreats(),
       fetchDashboardMetrics(),
@@ -65,7 +62,6 @@ export default function App() {
     });
   }, []);
 
-  // Helper to get color based on severity
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case "Critical":

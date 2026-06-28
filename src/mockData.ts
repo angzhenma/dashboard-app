@@ -43,11 +43,11 @@ export const fetchThreatsTypeData = (): Promise<PieChartData[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
-        { name: 'Malware', value: 35, color: '#F472B6' }, // Pink
-        { name: 'Ransomware', value: 15, color: '#E879F9' }, // Fuchsia
-        { name: 'RDP Exploit', value: 25, color: '#C084FC' }, // Purple
-        { name: 'Shadow IT', value: 10, color: '#A78BFA' }, // Violet
-        { name: 'Phishing', value: 15, color: '#818CF8' }  // Indigo
+        { name: 'Malware', value: 35, color: '#F472B6' },
+        { name: 'Ransomware', value: 15, color: '#E879F9' },
+        { name: 'RDP Exploit', value: 25, color: '#C084FC' },
+        { name: 'Shadow IT', value: 10, color: '#A78BFA' },
+        { name: 'Phishing', value: 15, color: '#818CF8' }
       ]);
     }, 600);
   });
@@ -59,7 +59,7 @@ export const fetchUnresolvedStatusData = (): Promise<PieChartData[]> => {
       resolve([
         { name: 'Not Mitigated', value: 45, color: 'var(--soc-red)' },
         { name: 'Mitigated (Pending)', value: 35, color: 'var(--soc-yellow)' },
-        { name: 'Under Investigation', value: 20, color: '#38BDF8' } // Light Blue
+        { name: 'Under Investigation', value: 20, color: '#38BDF8' }
       ]);
     }, 600);
   });
