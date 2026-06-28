@@ -1,4 +1,4 @@
-import { SecurityThreat } from './types';
+import type { SecurityThreat } from './types';
 
 export const fetchMockThreats = (): Promise<SecurityThreat[]> => {
   return new Promise((resolve) => {
