@@ -1,3 +1,9 @@
+export interface DashboardCard {
+  id: string;
+  type: 'metrics' | 'threatTypePie' | 'unresolvedPie' | 'severityBar' | 'vulnerableApps' | 'devicesByOS';
+  title: string;
+}
+
 export interface SecurityThreat {
   id: string;
   computerName: string;
