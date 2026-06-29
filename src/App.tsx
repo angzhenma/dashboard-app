@@ -415,6 +415,7 @@ export default function App() {
                 gap: "16px",
               }}
             >
+              {/*TODO: try approach a for multi column architecture (kanban strategy)*/}
               {activeCards.map((card, index) => (
                 <Draggable key={card.id} draggableId={card.id} index={index}>
                   {(provided) => (
