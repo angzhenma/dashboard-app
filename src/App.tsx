@@ -326,7 +326,7 @@ export default function App() {
           }}
         >
           <Plus size={18} />
-          Add Component
+          Add Card
         </button>
       </header>
 
@@ -389,14 +389,14 @@ export default function App() {
               >
                 + Secured Devices by Operating System (Telemetry Ingestion)
               </button>
-              <button
+              {/* <button
                 style={menuOptionStyle}
                 onClick={() =>
                   addCardToDashboard("metrics", "Operational Overview Counters")
                 }
               >
                 + Standard Metrics Aggregates
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
@@ -495,6 +495,7 @@ export default function App() {
           gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: "16px",
           marginBottom: "32px",
+          marginTop: "16px",
         }}
       >
         <div style={cardStyle}>
@@ -541,7 +542,6 @@ export default function App() {
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: "16px",
-          marginBottom: "32px",
         }}
       >
         {/* Threat Types Pie Chart */}
@@ -599,7 +599,7 @@ export default function App() {
             {loading ? (
               <p
                 style={{
-                  color: "#64748B",
+                  color: "#64748b",
                   textAlign: "center",
                   paddingTop: "100px",
                 }}
@@ -641,9 +641,8 @@ export default function App() {
         </div>
 
         {/* Threat Count Bar Chart */}
-        <div style={{ ...cardStyle, gridColumn: "1 / -1" }}>
+        <div style={{ ...cardStyle, gridColumn: "1 / -1", marginTop: "16px" }}>
           {" "}
-          {/* Spans full width */}
           <h2 style={chartTitleStyle}>Threats by Severity</h2>
           <div style={{ height: "300px" }}>
             {loading ? (
@@ -707,7 +706,7 @@ export default function App() {
         <p style={{ color: "#64748b" }}>Inverting telemetry pipelines...</p>
       ) : (
         <div
-          style={{ display: "grid", gap: "16px", gridTemplateColumns: "1fr" }}
+          style={{ display: "grid", gap: "16px", gridTemplateColumns: "1fr", marginTop: "16px" }}
         >
           <h2 style={{ fontSize: "18px", color: "#FFF", marginBottom: "4px" }}>
             Real-time Incident Feed
@@ -846,6 +845,7 @@ const subCardStyle: React.CSSProperties = {
   border: "1px solid var(--soc-border)",
   borderRadius: "8px",
   padding: "12px",
+  paddingTop: "16px",
 };
 
 const labelStyle: React.CSSProperties = {
