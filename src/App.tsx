@@ -660,7 +660,7 @@ export default function App() {
                               <div
                                 {...provided.dragHandleProps}
                                 style={{
-                                  cursor: "e-resize",
+                                  cursor: "grab",
                                   display: "flex",
                                   alignItems: "center",
                                 }}
