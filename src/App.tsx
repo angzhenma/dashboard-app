@@ -43,7 +43,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* MOCK DATA STRUCTURES FOR COMPONENTS */
+// MOCK DATA STRUCTURES FOR COMPONENTS
 const vulnerableAppsData = [
   { name: "App 0", hosts: 4, severity: "High" },
   { name: "App 1", hosts: 4, severity: "Low" },
@@ -64,22 +64,6 @@ export interface DashboardCardItem {
 }
 
 export default function App() {
-  // old dashboard card logic
-  // const [activeCards, setActiveCards] = useState<DashboardCardItem[]>([
-  //   { id: "card-metrics", type: "metrics", title: "Metrics Summary" },
-  //   { id: "card-types", type: "threatTypePie", title: "Threats by Type" },
-  //   {
-  //     id: "card-unresolved",
-  //     type: "unresolvedPie",
-  //     title: "Unresolved Threats",
-  //   },
-  //   {
-  //     id: "card-severity",
-  //     type: "severityBar",
-  //     title: "Threats by Severity Grid",
-  //   },
-  // ]);
-
   const [columns, setColumns] = useState<{
     [key: string]: DashboardCardItem[];
   }>({
@@ -160,11 +144,6 @@ export default function App() {
               marginTop: "16px",
             }}
           >
-            <h2
-              style={{ fontSize: "18px", color: "#FFF", marginBottom: "4px" }}
-            >
-              Real-time Incident Feed
-            </h2>
             {threats.map((threat) => (
               <div
                 key={threat.id}
@@ -299,7 +278,6 @@ export default function App() {
       case "threatTypePie":
         return (
           <div style={cardStyle}>
-            <h2 style={chartTitleStyle}>Threats by Type</h2>
             <div style={{ height: "300px" }}>
               {loading ? (
                 <p
@@ -348,7 +326,6 @@ export default function App() {
       case "unresolvedPie":
         return (
           <div style={cardStyle}>
-            <h2 style={chartTitleStyle}>Unresolved Threats</h2>
             <div style={{ height: "300px" }}>
               {loading ? (
                 <p
@@ -400,7 +377,6 @@ export default function App() {
             style={{ ...cardStyle, gridColumn: "1 / -1", marginTop: "16px" }}
           >
             {" "}
-            <h2 style={chartTitleStyle}>Threats by Severity</h2>
             <div style={{ height: "300px" }}>
               {loading ? (
                 <p
@@ -816,10 +792,7 @@ export default function App() {
               <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard(
-                    "metrics",
-                    "Operational Metrics Overview"
-                  )
+                  addCardToDashboard("metrics", "Operational Metrics Overview")
                 }
               >
                 + Standard Metrics Overview
@@ -828,10 +801,7 @@ export default function App() {
               <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard(
-                    "threats",
-                    "Real-Time Incident Feed"
-                  )
+                  addCardToDashboard("threats", "Real-Time Incident Feed")
                 }
               >
                 + Threat Data Feed
@@ -840,10 +810,7 @@ export default function App() {
               <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard(
-                    "threatTypePie",
-                    "Threats by Type"
-                  )
+                  addCardToDashboard("threatTypePie", "Threats by Type")
                 }
               >
                 + Threat Type Pie Chart
@@ -852,10 +819,7 @@ export default function App() {
               <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard(
-                    "unresolvedPie",
-                    "Unresolved Threats"
-                  )
+                  addCardToDashboard("unresolvedPie", "Unresolved Threats")
                 }
               >
                 + Unresolved Threats Pie Chart
@@ -864,10 +828,7 @@ export default function App() {
               <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard(
-                    "severityBar",
-                    "Threats by Severity"
-                  )
+                  addCardToDashboard("severityBar", "Threats by Severity")
                 }
               >
                 + Threat Severity Bar Graph
@@ -876,92 +837,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {/* OLD DRAG AND DROP CONTAINER
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="dashboard" direction="vertical">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr",
-                gap: "16px",
-              }}
-            >
-              {activeCards.map((card, index) => (
-                <Draggable key={card.id} draggableId={card.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      style={{
-                        ...cardStyle,
-                        ...provided.draggableProps.style,
-                      }}
-                    >
-                      {/* COMPONENT HEADER 
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          marginBottom: "16px",
-                          borderBottom: "1px solid rgba(34, 47, 71, 0.4)",
-                          paddingBottom: "8px",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "10px",
-                          }}
-                        >
-                          <div
-                            {...provided.dragHandleProps}
-                            style={{
-                              cursor: "grab",
-                              display: "flex",
-                              alignItems: "center",
-                            }}
-                          >
-                            <LayoutGrid size={16} color="#475569" />
-                          </div>
-                          <h4
-                            style={{
-                              margin: 0,
-                              fontSize: "15px",
-                              color: "#FFF",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {card.title}
-                          </h4>
-                        </div>
-
-                        <X
-                          size={16}
-                          color="var(--soc-subtext)"
-                          style={{
-                            cursor: "pointer",
-                          }}
-                          onClick={() => removeCard(colId, card.id)}
-                        />
-                      </div>
-
-                      {/* COMPONENT CONTENT BODY 
-                      <div>{renderCardContent(card.type)}</div>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext> */}
     </div>
   );
 }
@@ -997,13 +872,6 @@ const metricHeaderStyle: React.CSSProperties = {
   marginBottom: "8px",
 };
 
-const chartTitleStyle: React.CSSProperties = {
-  fontSize: "16px",
-  fontWeight: "bold",
-  color: "#FFF",
-  marginBottom: "20px",
-};
-
 const tooltipStyle: React.CSSProperties = {
   backgroundColor: "var(--soc-card)",
   border: "1px solid var(--soc-border)",
@@ -1012,29 +880,6 @@ const tooltipStyle: React.CSSProperties = {
   borderRadius: "8px",
   fontSize: "12px",
 };
-
-//
-// const subCardStyle: React.CSSProperties = {
-//   backgroundColor: "#090d16",
-//   border: "1px solid var(--soc-border)",
-//   borderRadius: "8px",
-//   padding: "12px",
-//   paddingTop: "16px",
-// };
-
-// const labelStyle: React.CSSProperties = {
-//   margin: 0,
-//   fontSize: "11px",
-//   color: "var(--soc-subtext)",
-//   textTransform: "uppercase",
-//   fontWeight: 600,
-// };
-
-// const numStyle: React.CSSProperties = {
-//   margin: "4px 0 0 0",
-//   fontSize: "20px",
-//   fontWeight: "bold",
-// };
 
 const modalOverlayStyle: React.CSSProperties = {
   position: "fixed",
