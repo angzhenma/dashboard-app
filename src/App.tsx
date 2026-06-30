@@ -147,6 +147,7 @@ export default function App() {
     }));
   };
 
+  // CARD TYPES AND DESIGN
   const renderCardContent = (type: string) => {
     switch (type) {
       case "threats":
@@ -552,7 +553,7 @@ export default function App() {
       case "Low":
         return "var(--soc-green)";
       default:
-        return "var(--soc-subtext)";
+        return "var(--soc-gray)";
     }
   };
 
@@ -751,7 +752,7 @@ export default function App() {
         <Plus size={24} />
       </button>
 
-      {/*MODAL LAYER*/}
+      {/*COMPONENT ADDITION MENU*/}
       {isMenuOpen && (
         <div style={modalOverlayStyle}>
           <div style={modalContentStyle}>
@@ -797,8 +798,9 @@ export default function App() {
                   )
                 }
               >
-                + Potentially Vulnerable Applications (Software Compliance)
+                + List of Potentially Vulnerable Applications
               </button>
+
               <button
                 style={menuOptionStyle}
                 onClick={() =>
@@ -808,8 +810,9 @@ export default function App() {
                   )
                 }
               >
-                + Secured Devices by Operating System (Telemetry Ingestion)
+                + List of Secured Devices by Operating System
               </button>
+
               <button
                 style={menuOptionStyle}
                 onClick={() =>
@@ -819,8 +822,9 @@ export default function App() {
                   )
                 }
               >
-                + Standard Metrics Aggregates
+                + Standard Metrics Overview
               </button>
+
               <button
                 style={menuOptionStyle}
                 onClick={() =>
@@ -831,6 +835,42 @@ export default function App() {
                 }
               >
                 + Threat Data Feed
+              </button>
+
+              <button
+                style={menuOptionStyle}
+                onClick={() =>
+                  addCardToDashboard(
+                    "threatTypePie",
+                    "Threats by Type"
+                  )
+                }
+              >
+                + Threat Type Pie Chart
+              </button>
+
+              <button
+                style={menuOptionStyle}
+                onClick={() =>
+                  addCardToDashboard(
+                    "unresolvedPie",
+                    "Unresolved Threats"
+                  )
+                }
+              >
+                + Unresolved Threats Pie Chart
+              </button>
+
+              <button
+                style={menuOptionStyle}
+                onClick={() =>
+                  addCardToDashboard(
+                    "severityBar",
+                    "Threats by Severity"
+                  )
+                }
+              >
+                + Threat Severity Bar Graph
               </button>
             </div>
           </div>
