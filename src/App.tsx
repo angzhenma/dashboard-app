@@ -533,8 +533,6 @@ export default function App() {
     }
   };
 
-  
-
   return (
     <div
       style={{
@@ -727,7 +725,7 @@ export default function App() {
 
       {/* FLOATING ACTION BUTTON */}
       <button onClick={() => setIsMenuOpen(true)} style={fabStyle}>
-        <Plus size={24} />
+        <Plus size={24}/>
       </button>
 
       {/*COMPONENT ADDITION MENU*/}
