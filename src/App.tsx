@@ -13,7 +13,6 @@ import {
   fetchDashboardMetrics,
 } from "./mockData";
 import type {
-  // DashboardCard,
   SecurityThreat,
   PieChartData,
   BarChartData,
@@ -23,12 +22,12 @@ import {
   ShieldAlert,
   Plus,
   X,
-  // Grid,
   LayoutGrid,
   Terminal,
   Bug,
   Activity,
-  // ShieldCheck,
+  Maximize2,
+  ShieldCheck,
 } from "lucide-react";
 import {
   PieChart,
@@ -44,7 +43,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-/* MOCK DATA STRUCTURES FOR NEW OPTIONS */
+/* MOCK DATA STRUCTURES FOR COMPONENTS */
 const vulnerableAppsData = [
   { name: "App 0", hosts: 4, severity: "High" },
   { name: "App 1", hosts: 4, severity: "Low" },
@@ -65,31 +64,59 @@ export interface DashboardCardItem {
 }
 
 export default function App() {
-  const [activeCards, setActiveCards] = useState<DashboardCardItem[]>([
-    { id: "card-metrics", type: "metrics", title: "Metrics Summary" },
-    { id: "card-types", type: "threatTypePie", title: "Threats by Type" },
-    {
-      id: "card-unresolved",
-      type: "unresolvedPie",
-      title: "Unresolved Threats",
-    },
-    {
-      id: "card-severity",
-      type: "severityBar",
-      title: "Threats by Severity Grid",
-    },
-  ]);
+  // old dashboard card logic
+  // const [activeCards, setActiveCards] = useState<DashboardCardItem[]>([
+  //   { id: "card-metrics", type: "metrics", title: "Metrics Summary" },
+  //   { id: "card-types", type: "threatTypePie", title: "Threats by Type" },
+  //   {
+  //     id: "card-unresolved",
+  //     type: "unresolvedPie",
+  //     title: "Unresolved Threats",
+  //   },
+  //   {
+  //     id: "card-severity",
+  //     type: "severityBar",
+  //     title: "Threats by Severity Grid",
+  //   },
+  // ]);
+
+  const [columns, setColumns] = useState<{
+    [key: string]: DashboardCardItem[];
+  }>({
+    "col-1": [],
+    "col-2": [],
+    "col-3": [],
+  });
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [resizableCards, setResizableCards] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const handleDragEnd = (result: DropResult) => {
-    if (!result.destination) return;
+    const { source, destination } = result;
+    if (!destination) return;
 
-    const items = Array.from(activeCards);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+    if (source.droppableId === destination.droppableId) {
+      const columnCards = Array.from(columns[source.droppableId]);
+      const [movedCard] = columnCards.splice(source.index, 1);
+      columnCards.splice(destination.index, 0, movedCard);
+      setColumns({
+        ...columns,
+        [source.droppableId]: columnCards,
+      });
+    } else {
+      const sourceCards = Array.from(columns[source.droppableId]);
+      const destinationCards = Array.from(columns[destination.droppableId]);
+      const [movedItem] = sourceCards.splice(source.index, 1);
+      destinationCards.splice(destination.index, 0, movedItem);
 
-    setActiveCards(items);
+      setColumns({
+        ...columns,
+        [source.droppableId]: sourceCards,
+        [destination.droppableId]: destinationCards,
+      });
+    }
   };
 
   const addCardToDashboard = (type: string, title: string) => {
@@ -98,76 +125,335 @@ export default function App() {
       type,
       title,
     };
-    setActiveCards([...activeCards, newCard]);
+    setColumns({
+      ...columns,
+      "col-1": [...columns["col-1"], newCard], // add new cards to first column by default
+    });
     setIsMenuOpen(false);
   };
 
-  const removeCard = (id: string) => {
-    setActiveCards(activeCards.filter((card) => card.id !== id));
+  const removeCard = (colId: string, cardId: string) => {
+    const updatedCards = columns[colId].filter((card) => card.id !== cardId);
+    setColumns({
+      ...columns,
+      [colId]: updatedCards,
+    });
+  };
+
+  const toggleResize = (id: string) => {
+    setResizableCards((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   const renderCardContent = (type: string) => {
     switch (type) {
+      case "threats":
+        return (
+          <div
+            style={{
+              display: "grid",
+              gap: "16px",
+              gridTemplateColumns: "1fr",
+              marginTop: "16px",
+            }}
+          >
+            <h2
+              style={{ fontSize: "18px", color: "#FFF", marginBottom: "4px" }}
+            >
+              Real-time Incident Feed
+            </h2>
+            {threats.map((threat) => (
+              <div
+                key={threat.id}
+                style={{
+                  ...cardStyle,
+                  borderLeft: `4px solid ${threat.severity === "Critical" ? "var(--soc-red)" : "var(--soc-yellow)"}`,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <span
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "14px",
+                      color: "#FFF",
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Terminal size={16} color="var(--soc-gray)" />
+                    {threat.computerName}{" "}
+                    <span
+                      style={{ color: "var(--soc-subtext)", fontWeight: 400 }}
+                    >
+                      ({threat.ipAddress})
+                    </span>
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: "bold",
+                      padding: "4px 10px",
+                      borderRadius: "12px",
+                      backgroundColor:
+                        threat.severity === "Critical"
+                          ? "rgba(239, 68, 68, 0.1)"
+                          : "rgba(245, 158, 11, 0.1)",
+                      color:
+                        threat.severity === "Critical"
+                          ? "var(--soc-red)"
+                          : "var(--soc-yellow)",
+                      border: `1px solid ${threat.severity === "Critical" ? "rgba(239, 68, 68, 0.2)" : "rgba(245, 158, 11, 0.2)"}`,
+                    }}
+                  >
+                    {threat.severity.toUpperCase()}
+                  </span>
+                </div>
+                <p
+                  style={{
+                    margin: "0 0 4px 0",
+                    fontSize: "16px",
+                    fontWeight: 500,
+                    color: "#F1F5F9",
+                  }}
+                >
+                  {threat.threatType}
+                </p>
+                <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
+                  Flagged Object:{" "}
+                  <code
+                    style={{
+                      backgroundColor: "#1E293B",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    {threat.programName}
+                  </code>
+                </p>
+              </div>
+            ))}
+          </div>
+        );
       case "metrics":
         return (
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "12px",
+              gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+              gap: "16px",
+              marginBottom: "32px",
+              marginTop: "16px",
             }}
           >
-            <div style={subCardStyle}>
-              <p style={labelStyle}>Total Threats</p>
-              <p style={numStyle}>135</p>
+            <div style={cardStyle}>
+              <div style={metricHeaderStyle}>
+                <p style={metricLabelStyle}>Total Threats</p>
+                <Bug size={20} color="var(--soc-subtext)" />
+              </div>
+              <p style={{ ...metricValueStyle, color: "#FFF" }}>
+                {loading ? "..." : metrics?.totalThreats}
+              </p>
             </div>
-            <div style={subCardStyle}>
-              <p style={labelStyle}>Critical</p>
-              <p style={{ ...numStyle, color: "var(--soc-red)" }}>12</p>
+            <div style={cardStyle}>
+              <div style={metricHeaderStyle}>
+                <p style={metricLabelStyle}>Critical Threats (Active)</p>
+                <ShieldAlert size={20} color="var(--soc-red)" />
+              </div>
+              <p style={{ ...metricValueStyle, color: "var(--soc-red)" }}>
+                {loading ? "..." : metrics?.criticalCount}
+              </p>
             </div>
-            <div style={subCardStyle}>
-              <p style={labelStyle}>RDP Ports</p>
-              <p style={{ ...numStyle, color: "var(--soc-blue)" }}>15</p>
+            <div style={cardStyle}>
+              <div style={metricHeaderStyle}>
+                <p style={metricLabelStyle}>RDP Connections</p>
+                <Terminal size={20} color="var(--soc-light-blue)" />
+              </div>
+              <p
+                style={{ ...metricValueStyle, color: "var(--soc-light-blue)" }}
+              >
+                {loading ? "..." : metrics?.activeRdpConnections}
+              </p>
+            </div>
+            <div style={cardStyle}>
+              <div style={metricHeaderStyle}>
+                <p style={metricLabelStyle}>AnyDesk Instances</p>
+                <Activity size={20} color="var(--soc-yellow)" />
+              </div>
+              <p style={{ ...metricValueStyle, color: "var(--soc-yellow)" }}>
+                {loading ? "..." : metrics?.activeAnyDeskInstances}
+              </p>
             </div>
           </div>
         );
       case "threatTypePie":
         return (
-          <div
-            style={{
-              height: "180px",
-              color: "#64748B",
-              textAlign: "center",
-              paddingTop: "40px",
-            }}
-          >
-            [Threats Pie Chart Widget]
+          <div style={cardStyle}>
+            <h2 style={chartTitleStyle}>Threats by Type</h2>
+            <div style={{ height: "300px" }}>
+              {loading ? (
+                <p
+                  style={{
+                    color: "var(--soc-subtext)",
+                    textAlign: "center",
+                    paddingTop: "100px",
+                  }}
+                >
+                  Loading chart...
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={threatsTypeData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {threatsTypeData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke="none"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: "12px", color: "#94a3b8" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         );
       case "unresolvedPie":
         return (
-          <div
-            style={{
-              height: "180px",
-              color: "#64748B",
-              textAlign: "center",
-              paddingTop: "40px",
-            }}
-          >
-            [Mitigation Status Widget]
+          <div style={cardStyle}>
+            <h2 style={chartTitleStyle}>Unresolved Threats</h2>
+            <div style={{ height: "300px" }}>
+              {loading ? (
+                <p
+                  style={{
+                    color: "var(--soc-subtext)",
+                    textAlign: "center",
+                    paddingTop: "100px",
+                  }}
+                >
+                  Loading chart...
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={unresolvedStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {unresolvedStatusData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.color}
+                          stroke="none"
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    />
+                    <Legend
+                      iconType="circle"
+                      wrapperStyle={{ fontSize: "12px", color: "#94a3b8" }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         );
       case "severityBar":
         return (
           <div
-            style={{
-              height: "180px",
-              color: "#64748B",
-              textAlign: "center",
-              paddingTop: "40px",
-            }}
+            style={{ ...cardStyle, gridColumn: "1 / -1", marginTop: "16px" }}
           >
-            [Severity Metrics Bar Chart]
+            {" "}
+            <h2 style={chartTitleStyle}>Threats by Severity</h2>
+            <div style={{ height: "300px" }}>
+              {loading ? (
+                <p
+                  style={{
+                    color: "var(--soc-subtext)",
+                    textAlign: "center",
+                    paddingTop: "100px",
+                  }}
+                >
+                  Loading chart...
+                </p>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={threatsSeverityData}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="var(--soc-border)"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="severity"
+                      stroke="var(--soc-gray)"
+                      fontSize={12}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="var(--soc-gray)"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
+                    />
+                    <Bar
+                      dataKey="count"
+                      fill="var(--soc-blue)"
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {threatsSeverityData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={getSeverityColor(entry.severity)}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
           </div>
         );
 
@@ -262,11 +548,11 @@ export default function App() {
       case "High":
         return "var(--soc-yellow)";
       case "Medium":
-        return "#38BDF8";
+        return "var(--soc-blue)";
       case "Low":
         return "var(--soc-green)";
       default:
-        return "#64748B";
+        return "var(--soc-subtext)";
     }
   };
 
@@ -274,9 +560,10 @@ export default function App() {
     <div
       style={{
         padding: "40px",
-        maxWidth: "1200px",
+        maxWidth: "100%",
         margin: "0 auto",
         position: "relative",
+        minHeight: "100vh",
       }}
     >
       {/* HEADER BAR */}
@@ -290,45 +577,179 @@ export default function App() {
           borderBottom: "1px solid var(--soc-border)",
         }}
       >
-        <ShieldAlert size={36} color="var(--soc-red)" />
+        <ShieldCheck size={36} color="var(--soc-green)" />
         <div>
           <h1
             style={{
               margin: 0,
               fontSize: "24px",
               fontWeight: "bold",
-              color: "#FFF",
+              color: "var(--soc-text)",
             }}
           >
             SME Security Dashboard
           </h1>
           <p
-            style={{ margin: "4px 0 0 0", fontSize: "14px", color: "#64748B" }}
+            style={{
+              margin: "4px 0 0 0",
+              fontSize: "14px",
+              color: "var(--soc-subtext)",
+            }}
           >
-            Prototype with Simulated Threat Data Feed
+            (Prototype with Mock Data)
           </p>
         </div>
+      </header>
 
-        {/*ADD PLUS CARD BUTTON*/}
-        <button
-          onClick={() => setIsMenuOpen(true)}
+      {/* KANBAN CONTAINER STRUCTURE */}
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div
           style={{
             display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            backgroundColor: "var(--soc-blue)",
-            color: "#090d16",
-            border: "none",
-            borderRadius: "8px",
-            padding: "10px 18px",
-            fontWeight: "bold",
-            cursor: "pointer",
+            gap: "24px",
+            alignItems: "flex-start",
+            overflowX: "auto",
+            paddingBottom: "40px",
           }}
         >
-          <Plus size={18} />
-          Add Card
-        </button>
-      </header>
+          {Object.keys(columns).map((colId) => (
+            <Droppable key={colId} droppableId={colId} direction="vertical">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={kanbanColumnStyle}
+                >
+                  {columns[colId].map((card, index) => (
+                    <Draggable
+                      key={card.id}
+                      draggableId={card.id}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          style={{
+                            ...cardStyle,
+                            ...provided.draggableProps.style,
+                            resize: resizableCards[card.id]
+                              ? "horizontal"
+                              : "none",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {/* COMPONENT HEADER */}
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              marginBottom: "16px",
+                              borderBottom: "1px solid rgba(34, 47, 71, 0.4)",
+                              paddingBottom: "8px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "10px",
+                              }}
+                            >
+                              <div
+                                {...provided.dragHandleProps}
+                                style={{
+                                  cursor: "e-resize",
+                                  display: "flex",
+                                  alignItems: "center",
+                                }}
+                              >
+                                <LayoutGrid size={16} color="#475569" />
+                              </div>
+                              <h4
+                                style={{
+                                  margin: 0,
+                                  fontSize: "15px",
+                                  color: "var(--soc-text)",
+                                  fontWeight: 600,
+                                }}
+                              >
+                                {card.title}
+                              </h4>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "8px",
+                              }}
+                            >
+                              {/* TOGGLE EXPAND */}
+                              <button
+                                onClick={() => toggleResize(card.id)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: "6px",
+                                  borderRadius: "6px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  backgroundColor: resizableCards[card.id]
+                                    ? "rgba(56, 189, 248, 0.15)"
+                                    : "transparent",
+                                  color: resizableCards[card.id]
+                                    ? "var(--soc-blue)"
+                                    : "var(--soc-gray)",
+                                  transition: "all 0.2 ease",
+                                }}
+                                title={
+                                  resizableCards[card.id]
+                                    ? "Lock Width"
+                                    : "Enable Resizing"
+                                }
+                              >
+                                <Maximize2 size={16} />
+                              </button>
+
+                              {/* CLOSE BUTTON */}
+                              <button
+                                onClick={() => removeCard(colId, card.id)}
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: "6px",
+                                  display: "flex",
+                                  color: "var(--soc-gray)",
+                                }}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* COMPONENT CONTENT BODY */}
+                          <div>{renderCardContent(card.type)}</div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          ))}
+        </div>
+      </DragDropContext>
+
+      {/* FLOATING ACTION BUTTON */}
+      <button onClick={() => setIsMenuOpen(true)} style={fabStyle}>
+        <Plus size={24} />
+      </button>
 
       {/*MODAL LAYER*/}
       {isMenuOpen && (
@@ -354,7 +775,7 @@ export default function App() {
               </h3>
               <X
                 size={20}
-                color="#64748b"
+                color="var(--soc-subtext)"
                 style={{ cursor: "pointer" }}
                 onClick={() => setIsMenuOpen(false)}
               />
@@ -389,20 +810,34 @@ export default function App() {
               >
                 + Secured Devices by Operating System (Telemetry Ingestion)
               </button>
-              {/* <button
+              <button
                 style={menuOptionStyle}
                 onClick={() =>
-                  addCardToDashboard("metrics", "Operational Overview Counters")
+                  addCardToDashboard(
+                    "metrics",
+                    "Operational Metrics Overview"
+                  )
                 }
               >
                 + Standard Metrics Aggregates
-              </button> */}
+              </button>
+              <button
+                style={menuOptionStyle}
+                onClick={() =>
+                  addCardToDashboard(
+                    "threats",
+                    "Real-Time Incident Feed"
+                  )
+                }
+              >
+                + Threat Data Feed
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/*DRAGGABLE AND DROP CONTAINER*/}
+      {/* OLD DRAG AND DROP CONTAINER
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="dashboard" direction="vertical">
           {(provided) => (
@@ -415,7 +850,6 @@ export default function App() {
                 gap: "16px",
               }}
             >
-              {/*TODO: try approach a for multi column architecture (kanban strategy)*/}
               {activeCards.map((card, index) => (
                 <Draggable key={card.id} draggableId={card.id} index={index}>
                   {(provided) => (
@@ -427,7 +861,7 @@ export default function App() {
                         ...provided.draggableProps.style,
                       }}
                     >
-                      {/* COMPONENT HEADER */}
+                      {/* COMPONENT HEADER 
                       <div
                         style={{
                           display: "flex",
@@ -469,15 +903,15 @@ export default function App() {
 
                         <X
                           size={16}
-                          color="#64748b"
+                          color="var(--soc-subtext)"
                           style={{
                             cursor: "pointer",
                           }}
-                          onClick={() => removeCard(card.id)}
+                          onClick={() => removeCard(colId, card.id)}
                         />
                       </div>
 
-                      {/* COMPONENT CONTENT BODY */}
+                      {/* COMPONENT CONTENT BODY 
                       <div>{renderCardContent(card.type)}</div>
                     </div>
                   )}
@@ -487,309 +921,7 @@ export default function App() {
             </div>
           )}
         </Droppable>
-      </DragDropContext>
-
-      {/* METRIC SUMMARIES */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "16px",
-          marginBottom: "32px",
-          marginTop: "16px",
-        }}
-      >
-        <div style={cardStyle}>
-          <div style={metricHeaderStyle}>
-            <p style={metricLabelStyle}>Total Threats</p>
-            <Bug size={20} color="#64748B" />
-          </div>
-          <p style={{ ...metricValueStyle, color: "#FFF" }}>
-            {loading ? "..." : metrics?.totalThreats}
-          </p>
-        </div>
-        <div style={cardStyle}>
-          <div style={metricHeaderStyle}>
-            <p style={metricLabelStyle}>Critical Threats (Active)</p>
-            <ShieldAlert size={20} color="var(--soc-red)" />
-          </div>
-          <p style={{ ...metricValueStyle, color: "var(--soc-red)" }}>
-            {loading ? "..." : metrics?.criticalCount}
-          </p>
-        </div>
-        <div style={cardStyle}>
-          <div style={metricHeaderStyle}>
-            <p style={metricLabelStyle}>RDP Connections</p>
-            <Terminal size={20} color="#38bdf8" />
-          </div>
-          <p style={{ ...metricValueStyle, color: "#38bdf8" }}>
-            {loading ? "..." : metrics?.activeRdpConnections}
-          </p>
-        </div>
-        <div style={cardStyle}>
-          <div style={metricHeaderStyle}>
-            <p style={metricLabelStyle}>AnyDesk Instances</p>
-            <Activity size={20} color="var(--soc-yellow)" />
-          </div>
-          <p style={{ ...metricValueStyle, color: "var(--soc-yellow)" }}>
-            {loading ? "..." : metrics?.activeAnyDeskInstances}
-          </p>
-        </div>
-      </section>
-
-      {/* CHARTS SECTION */}
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          gap: "16px",
-        }}
-      >
-        {/* Threat Types Pie Chart */}
-        <div style={cardStyle}>
-          <h2 style={chartTitleStyle}>Threats by Type</h2>
-          <div style={{ height: "300px" }}>
-            {loading ? (
-              <p
-                style={{
-                  color: "#64748B",
-                  textAlign: "center",
-                  paddingTop: "100px",
-                }}
-              >
-                Loading chart...
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={threatsTypeData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {threatsTypeData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        stroke="none"
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: "12px", color: "#94a3b8" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Unresolved Threats Pie Chart */}
-        <div style={cardStyle}>
-          <h2 style={chartTitleStyle}>Unresolved Threats</h2>
-          <div style={{ height: "300px" }}>
-            {loading ? (
-              <p
-                style={{
-                  color: "#64748b",
-                  textAlign: "center",
-                  paddingTop: "100px",
-                }}
-              >
-                Loading chart...
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={unresolvedStatusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {unresolvedStatusData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={entry.color}
-                        stroke="none"
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
-                  />
-                  <Legend
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: "12px", color: "#94a3b8" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-
-        {/* Threat Count Bar Chart */}
-        <div style={{ ...cardStyle, gridColumn: "1 / -1", marginTop: "16px" }}>
-          {" "}
-          <h2 style={chartTitleStyle}>Threats by Severity</h2>
-          <div style={{ height: "300px" }}>
-            {loading ? (
-              <p
-                style={{
-                  color: "#64748b",
-                  textAlign: "center",
-                  paddingTop: "100px",
-                }}
-              >
-                Loading chart...
-              </p>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={threatsSeverityData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="var(--soc-border)"
-                    vertical={false}
-                  />
-                  <XAxis
-                    dataKey="severity"
-                    stroke="#64748b"
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis
-                    stroke="#64748b"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                  />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    cursor={{ fill: "rgba(255, 255, 255, 0.05)" }}
-                  />
-                  <Bar
-                    dataKey="count"
-                    fill="var(--soc-blue)"
-                    radius={[4, 4, 0, 0]}
-                  >
-                    {threatsSeverityData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={getSeverityColor(entry.severity)}
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* THREAT DATA FEED */}
-      {loading ? (
-        <p style={{ color: "#64748b" }}>Inverting telemetry pipelines...</p>
-      ) : (
-        <div
-          style={{ display: "grid", gap: "16px", gridTemplateColumns: "1fr", marginTop: "16px" }}
-        >
-          <h2 style={{ fontSize: "18px", color: "#FFF", marginBottom: "4px" }}>
-            Real-time Incident Feed
-          </h2>
-          {threats.map((threat) => (
-            <div
-              key={threat.id}
-              style={{
-                ...cardStyle,
-                borderLeft: `4px solid ${threat.severity === "Critical" ? "var(--soc-red)" : "var(--soc-yellow)"}`,
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "12px",
-                }}
-              >
-                <span
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    fontSize: "14px",
-                    color: "#FFF",
-                    fontWeight: 600,
-                  }}
-                >
-                  <Terminal size={16} color="#64748b" />
-                  {threat.computerName}{" "}
-                  <span style={{ color: "#64748b", fontWeight: 400 }}>
-                    ({threat.ipAddress})
-                  </span>
-                </span>
-                <span
-                  style={{
-                    fontSize: "11px",
-                    fontWeight: "bold",
-                    padding: "4px 10px",
-                    borderRadius: "12px",
-                    backgroundColor:
-                      threat.severity === "Critical"
-                        ? "rgba(239, 68, 68, 0.1)"
-                        : "rgba(245, 158, 11, 0.1)",
-                    color:
-                      threat.severity === "Critical"
-                        ? "var(--soc-red)"
-                        : "var(--soc-yellow)",
-                    border: `1px solid ${threat.severity === "Critical" ? "rgba(239, 68, 68, 0.2)" : "rgba(245, 158, 11, 0.2)"}`,
-                  }}
-                >
-                  {threat.severity.toUpperCase()}
-                </span>
-              </div>
-              <p
-                style={{
-                  margin: "0 0 4px 0",
-                  fontSize: "16px",
-                  fontWeight: 500,
-                  color: "#F1F5F9",
-                }}
-              >
-                {threat.threatType}
-              </p>
-              <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
-                Flagged Object:{" "}
-                <code
-                  style={{
-                    backgroundColor: "#1E293B",
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                  }}
-                >
-                  {threat.programName}
-                </code>
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      </DragDropContext> */}
     </div>
   );
 }
@@ -841,27 +973,28 @@ const tooltipStyle: React.CSSProperties = {
   fontSize: "12px",
 };
 
-const subCardStyle: React.CSSProperties = {
-  backgroundColor: "#090d16",
-  border: "1px solid var(--soc-border)",
-  borderRadius: "8px",
-  padding: "12px",
-  paddingTop: "16px",
-};
+//
+// const subCardStyle: React.CSSProperties = {
+//   backgroundColor: "#090d16",
+//   border: "1px solid var(--soc-border)",
+//   borderRadius: "8px",
+//   padding: "12px",
+//   paddingTop: "16px",
+// };
 
-const labelStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: "11px",
-  color: "#64748b",
-  textTransform: "uppercase",
-  fontWeight: 600,
-};
+// const labelStyle: React.CSSProperties = {
+//   margin: 0,
+//   fontSize: "11px",
+//   color: "var(--soc-subtext)",
+//   textTransform: "uppercase",
+//   fontWeight: 600,
+// };
 
-const numStyle: React.CSSProperties = {
-  margin: "4px 0 0 0",
-  fontSize: "20px",
-  fontWeight: "bold",
-};
+// const numStyle: React.CSSProperties = {
+//   margin: "4px 0 0 0",
+//   fontSize: "20px",
+//   fontWeight: "bold",
+// };
 
 const modalOverlayStyle: React.CSSProperties = {
   position: "fixed",
@@ -896,4 +1029,30 @@ const menuOptionStyle: React.CSSProperties = {
   fontSize: "14px",
   fontWeight: 500,
   transition: "border 0.2s ease",
+};
+
+const kanbanColumnStyle: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+  minWidth: "340px", // empty column base width
+  minHeight: "300px", // empty column base height
+  flex: "0 0 auto", // prevent shrinking
+};
+
+const fabStyle: React.CSSProperties = {
+  position: "fixed",
+  bottom: "40px",
+  left: "40px",
+  width: "56px",
+  height: "56px",
+  borderRadius: "50%",
+  backgroundColor: "var(--soc-blue)",
+  color: "#090d16",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
+  cursor: "pointer",
+  zIndex: 100,
 };
