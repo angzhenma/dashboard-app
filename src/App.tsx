@@ -43,7 +43,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-// MOCK DATA STRUCTURES FOR COMPONENTS
+// MOCK DATA FOR NEWER COMPONENTS
 const vulnerableAppsData = [
   { name: "App 0", hosts: 4, severity: "High" },
   { name: "App 1", hosts: 4, severity: "Low" },
@@ -532,6 +532,8 @@ export default function App() {
         return "var(--soc-gray)";
     }
   };
+
+  
 
   return (
     <div
