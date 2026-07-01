@@ -20,13 +20,13 @@ const getSeverityColor = (severity: string) => {
     case "Critical":
       return "var(--soc-red)";
     case "High":
-      return "var(--soc-yellow)";
+      return "var(--soc-orange)";
     case "Medium":
-      return "var(--soc-blue)";
+      return "var(--soc-yellow)";
     case "Low":
-      return "var(--soc-green)";
+      return "var(--soc-blue)";
     default:
-      return "var(--soc-gray)";
+      return "var(--soc-green)";
   }
 };
 

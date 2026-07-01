@@ -69,11 +69,11 @@ export const fetchThreatsSeverityData = (): Promise<BarChartData[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
-        { severity: 'Critical', count: 12 },
+        { severity: 'Critical', count: 8 },
         { severity: 'High', count: 28 },
-        { severity: 'Medium', count: 45 },
-        { severity: 'Low', count: 32 },
-        { severity: 'False Positive', count: 18 }
+        { severity: 'Medium', count: 34 },
+        { severity: 'Low', count: 45 },
+        { severity: 'False Positive', count: 20 }
       ]);
     }, 700);
   });

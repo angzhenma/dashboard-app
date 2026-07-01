@@ -23,7 +23,7 @@ export default function MetricsCard({ metrics, loading }: MetricsCardProps) {
           <p className="m-0 text-sm text-[var(--soc-subtext)] font-medium uppercase tracking-wider">
             Total Threats
           </p>
-          <Bug size={20} className="text-[var(--soc-subtext)]" />
+          <Bug size={20} className="text-[var(--soc-text)]" />
         </div>
         <p className="m-0 mt-2 text-3xl font-bold text-[var(--soc-text)]">
           {metrics?.totalThreats}
