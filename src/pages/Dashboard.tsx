@@ -19,18 +19,18 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// Static mock data defined outside the component to prevent unnecessary re-renders
+// static mock data
 const vulnerableAppsData = [
-  { name: "App 0", hosts: 4, severity: "High" },
-  { name: "App 1", hosts: 4, severity: "Low" },
-  { name: "App 2", hosts: 4, severity: "Medium" },
-  { name: "App 3", hosts: 4, severity: "Critical" },
+  { name: "AnyDesk", hosts: 3, severity: "High" },
+  { name: "Discord", hosts: 1, severity: "Low" },
+  { name: "Dropbox", hosts: 6, severity: "Medium" },
+  { name: "Chrome Remote Desktop", hosts: 4, severity: "Critical" },
 ];
 
 const devicesByOSData = [
-  { name: "Windows 11", value: 84, color: "#0078d4" },
-  { name: "macOS Sequoia", value: 21, color: "#e95420" },
-  { name: "Ubuntu LTS", value: 42, color: "#a2aaad" },
+  { name: "Windows 11", value: 84, color: "var(--soc-yellow)" },
+  { name: "macOS Sequoia", value: 21, color: "var(--soc-blue)" },
+  { name: "Ubuntu LTS", value: 42, color: "var(--soc-green)" },
 ];
 
 export interface DashboardCardItem {
@@ -252,7 +252,12 @@ export default function Dashboard() {
                     color:
                       app.severity === "Critical"
                         ? "var(--soc-red)"
-                        : "var(--soc-yellow)",
+                        : app.severity === "High"
+                        ? "var(--soc-orange)"
+                        : app.severity === "Medium"
+                        ? "var(--soc-yellow)"
+                        : "var(--soc-gray)",
+                      fontWeight: "bold",
                   }}
                 >
                   {app.hosts} Hosts Affected
