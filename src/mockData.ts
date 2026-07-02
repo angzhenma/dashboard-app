@@ -1,4 +1,4 @@
-import type { SecurityThreat, PieChartData, BarChartData, DashboardMetrics } from './types';
+import type { SecurityThreat, PieChartData, BarChartData, DashboardMetrics, VulnerableAppsData, DevicesByOS } from './types';
 
 export const fetchMockThreats = (): Promise<SecurityThreat[]> => {
   return new Promise((resolve) => {
@@ -90,4 +90,30 @@ export const fetchDashboardMetrics = (): Promise<DashboardMetrics> => {
             });
         }, 500);
     });
+};
+
+export const fetchVulnerableAppsData = (): Promise <VulnerableAppsData[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { name: 'AnyDesk', hosts: 12, severity: 'High' },
+        { name: 'Discord', hosts: 1, severity: 'Low' },
+        { name: 'Dropbox', hosts: 6, severity: 'Medium' },
+        { name: 'Chrome Remote Desktop', hosts: 4, severity: 'Critical' }
+      ]);
+    }, 600);
+  });
+};
+
+export const fetchDevicesByOSData = (): Promise<DevicesByOS[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { name: 'Windows 11', value: 84, color: 'var(--soc-yellow)' },
+        { name: 'macOS Sequoia', value: 21, color: 'var(--soc-blue)' },
+        { name: 'Ubuntu 24.04', value: 12, color: 'var(--soc-green)' },
+        { name: 'Windows 10', value: 6, color: 'var(--soc-purple)' }
+      ]);
+    }, 600);
+  });
 };

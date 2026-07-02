@@ -31,3 +31,15 @@ export interface DashboardMetrics {
   activeAnyDeskInstances: number;
   activeRdpConnections: number;
 }
+
+export interface VulnerableAppsData {
+  name: string;
+  hosts: number;
+  severity: string;
+}
+
+export interface DevicesByOS {
+  name: string;
+  value: number;
+  color: string;
+}

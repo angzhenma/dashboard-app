@@ -18,20 +18,8 @@ import {
   Maximize2,
   ShieldCheck,
 } from "lucide-react";
-
-// static mock data
-const vulnerableAppsData = [
-  { name: "AnyDesk", hosts: 3, severity: "High" },
-  { name: "Discord", hosts: 1, severity: "Low" },
-  { name: "Dropbox", hosts: 6, severity: "Medium" },
-  { name: "Chrome Remote Desktop", hosts: 4, severity: "Critical" },
-];
-
-const devicesByOSData = [
-  { name: "Windows 11", value: 84, color: "var(--soc-yellow)" },
-  { name: "macOS Sequoia", value: 21, color: "var(--soc-blue)" },
-  { name: "Ubuntu LTS", value: 42, color: "var(--soc-green)" },
-];
+import { fetchVulnerableAppsData } from "../mockData";
+import { fetchDevicesByOSData } from "../mockData";
 
 export interface DashboardCardItem {
   id: string;
@@ -234,7 +222,7 @@ export default function Dashboard() {
       case "vulnerableApps":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {vulnerableAppsData.map((app, i) => (
+            {fetchVulnerableAppsData().then((data) => data.map((app, i) => (
               <div
                 key={i}
                 style={{
@@ -263,13 +251,13 @@ export default function Dashboard() {
                   {app.hosts} Hosts Affected
                 </span>
               </div>
-            ))}
+            )))}
           </div>
         );
       case "devicesByOs":
         return (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {devicesByOSData.map((os, i) => (
+            {fetchDevicesByOSData().then((data) => data.map((os, i) => (
               <div
                 key={i}
                 style={{
@@ -283,7 +271,7 @@ export default function Dashboard() {
                   {os.value} Active
                 </span>
               </div>
-            ))}
+            )))}
           </div>
         );
       default:
