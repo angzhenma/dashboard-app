@@ -43,3 +43,9 @@ export interface DevicesByOS {
   value: number;
   color: string;
 }
+
+export interface LoginCredentials {
+  username: string;
+  password: string;
+  role: 'admin' | 'developer' | 'analyst';
+};

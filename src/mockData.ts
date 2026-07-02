@@ -1,4 +1,4 @@
-import type { SecurityThreat, PieChartData, BarChartData, DashboardMetrics, VulnerableAppsData, DevicesByOS } from './types';
+import type { SecurityThreat, PieChartData, BarChartData, DashboardMetrics, VulnerableAppsData, DevicesByOS, LoginCredentials } from './types';
 
 export const fetchMockThreats = (): Promise<SecurityThreat[]> => {
   return new Promise((resolve) => {
@@ -115,5 +115,17 @@ export const fetchDevicesByOSData = (): Promise<DevicesByOS[]> => {
         { name: 'Windows 10', value: 6, color: 'var(--soc-purple)' }
       ]);
     }, 600);
+  });
+};
+
+export const fetchUserCredentials = (): Promise<LoginCredentials[]> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve([
+        { username: 'admin', password: 'admin123', role: 'admin' },
+        { username: 'dev', password: 'dev123', role: 'developer' },
+        { username: 'analyst', password: 'analyst123', role: 'analyst' }
+      ]);
+    }, 500);
   });
 };
