@@ -8,22 +8,15 @@ A prototype Security Operations Center (SOC) dashboard built with **Vite + React
 
 - **[Vite](https://vitejs.dev/)** - build tool / dev server
 - **React** + **TypeScript**
-- **[Tailwind CSS v4](https://tailwindcss.com/)** - styling, driven by CSS custom properties
+- **[Tailwind CSS](https://tailwindcss.com/)** - styling, driven by CSS custom properties
 - **[Recharts](https://recharts.org/)** - pie and bar charts
-- **[@hello-pangea/dnd](https://github.com/hello-pangea/dnd)** - drag-and-drop Kanban board (maintained fork of `react-beautiful-dnd`)
-- **[lucide-react](https://lucide.dev/)** - icons
+- **[@hello-pangea/dnd](https://dnd.hellopangea.com/)** - drag-and-drop Kanban board (maintained fork of `react-beautiful-dnd`)
+- **[Lucide](https://lucide.dev/)** - icons
 
 ## Features
 
 - **Kanban-style board:** three columns of cards, reorderable and movable between columns via drag-and-drop.
-- **Add Card menu:** a `+` menu lets you add any of the following cards to the board:
-  - Standard Metrics Overview
-  - Real-Time Incident Feed (raw threat list)
-  - Threat Type Pie Chart
-  - Unresolved Threats Pie Chart
-  - Threat Severity Bar Graph
-  - List of Potentially Vulnerable Applications
-  - List of Secured Devices by Operating System
+- **Add Card menu:** a `+` menu lets you add cards featuring a plethora of security data to the board.
 - **Resizable cards:** individual cards can be toggled into a resizable state and expanded horizontally.
 - **Responsive metric grid:** `MetricsCard` uses a CSS Grid with `auto-fit`/`minmax(280px, 1fr)`, so its internal columns respond to the card's width when resized.
 
