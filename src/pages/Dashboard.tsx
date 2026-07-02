@@ -13,7 +13,7 @@ import {
 import {
   Plus,
   X,
-  LayoutGrid,
+  Info,
   Terminal,
   Maximize2,
   ShieldCheck,
@@ -385,7 +385,7 @@ export default function Dashboard() {
                                   alignItems: "center",
                                 }}
                               >
-                                <LayoutGrid size={16} color="#475569" />
+                                <Info size={16} color="#475569" />
                               </div>
                               <h4
                                 style={{
