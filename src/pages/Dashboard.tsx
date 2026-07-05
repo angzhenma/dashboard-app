@@ -41,6 +41,10 @@ export default function Dashboard() {
     "col-3": [],
   });
 
+  useEffect(() => {
+    document.title = "Security Operations Center Dashboard";
+  }, []);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [resizableCards, setResizableCards] = useState<Record<string, boolean>>(
     {},
