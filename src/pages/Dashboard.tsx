@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
@@ -20,6 +20,18 @@ export interface DashboardCardItem {
   title: string;
 }
 
+export interface VulnerableApp {
+  name: string;
+  severity: string;
+  hosts: number;
+}
+
+export interface DeviceByOS {
+  name: string;
+  value: number;
+  color: string;
+}
+
 export default function Dashboard() {
   const [columns, setColumns] = useState<{
     [key: string]: DashboardCardItem[];
@@ -34,6 +46,9 @@ export default function Dashboard() {
     {},
   );
 
+  const [vulnerableApps, setVulnerableApps] = useState<VulnerableApp[]>([]);
+  const [devicesByOS, setDevicesByOS] = useState<DeviceByOS[]>([]);
+
   const {
     metrics,
     threats,
@@ -42,6 +57,11 @@ export default function Dashboard() {
     threatsSeverityData,
     loading,
   } = useDashboardData();
+
+  useEffect(() => {
+    fetchVulnerableAppsData().then((data) => {setVulnerableApps(data)});
+    fetchDevicesByOSData().then((data) => {setDevicesByOS(data)});
+  }, []);
 
   const handleDragEnd = (result: DropResult) => {
     const { source, destination } = result;
@@ -145,7 +165,7 @@ export default function Dashboard() {
                   </span>
                   <span
                     className="
-                    font-[11px]
+                    text-[11px]
                     font-bold
                     px-[10px]
                     py-[4px]
@@ -178,7 +198,7 @@ export default function Dashboard() {
                   Flagged Object:{" "}
                   <code
                     className="
-                    bg-[#1E293B]
+                    bg-slate-800
                     px-2
                     py-1
                     rounded"
@@ -216,21 +236,20 @@ export default function Dashboard() {
       case "vulnerableApps":
         return (
           <div className="flex flex-col gap-2">
-            {fetchVulnerableAppsData().then((data) =>
-              data.map((app, i) => (
+            {vulnerableApps.map((app, i) => (
                 <div
                   key={i}
                   className="
                     flex
                     justify-between
                     p-2
-                    bg-[#1E293B]
+                    bg-slate-800
                     rounded
                   "
                 >
-                  <span>{app.name}</span>
+                  <span className="text-sm text-[var(--soc-text)]">{app.name}</span>
                   <span
-                    className="font-bold"
+                    className="font-bold text-sm"
                     style={{
                       color:
                         app.severity === "Critical"
@@ -245,15 +264,13 @@ export default function Dashboard() {
                     {app.hosts} Hosts Affected
                   </span>
                 </div>
-              )),
-            )}
+              ))}
           </div>
         );
       case "devicesByOs":
         return (
           <div className="flex flex-col gap-2">
-            {fetchDevicesByOSData().then((data) =>
-              data.map((os, i) => (
+            {devicesByOS.map((os, i) => (
                 <div
                   key={i}
                   className="
@@ -265,13 +282,12 @@ export default function Dashboard() {
                     rounded
                   "
                 >
-                  <span className="text-[14px]">{os.name}</span>
-                  <span className="font-bold [os.color]">
+                  <span className="text-[14px] text-[var(--soc-text)]">{os.name}</span>
+                  <span className="font-bold text-sm" style={{ color: os.color }}>
                     {os.value} Active
                   </span>
                 </div>
-              )),
-            )}
+              ))}
           </div>
         );
       default:
@@ -307,7 +323,7 @@ export default function Dashboard() {
               m-0
               text-[var(--soc-text)]
               font-bold
-              text-2x
+              text-2xl
             "
           >
             SME Security Dashboard
@@ -410,25 +426,21 @@ export default function Dashboard() {
                             >
                               <button
                                 onClick={() => toggleResize(card.id)}
-                                className="
-                                  bg-none
+                                className={`
                                   border-none
-                                  cursor-pointer
-                                  rounded-[6px]
                                   flex
                                   items-center
                                   justify-center
-                                  p-1
+                                  p-1.5
+                                  rounded-md
+                                  cursor-pointer 
                                   transition-all duration-200 ease-in-out
-                                "
-                                style={{
-                                  backgroundColor: resizableCards[card.id]
-                                    ? "rgba(56, 189, 248, 0.15)"
-                                    : "transparent",
-                                  color: resizableCards[card.id]
-                                    ? "var(--soc-blue)"
-                                    : "var(--soc-gray)",
-                                }}
+                                  ${
+                                    resizableCards[card.id]
+                                    ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30"
+                                    : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+                                  }
+                                `}
                                 title={
                                   resizableCards[card.id]
                                     ? "Lock Width"
@@ -444,7 +456,7 @@ export default function Dashboard() {
                                   border-none
                                   cursor-pointer
                                   flex
-                                  [var(--soc-gray)]
+                                  text-[var(--soc-gray)]
                                   p-[6px]
                                 "
                               >
@@ -465,7 +477,8 @@ export default function Dashboard() {
         </div>
       </DragDropContext>
 
-      <button onClick={() => setIsMenuOpen(true)}
+      <button
+        onClick={() => setIsMenuOpen(true)}
         className="
           fixed
           bottom-10
@@ -481,7 +494,7 @@ export default function Dashboard() {
           shadow-lg
           z-[100]"
       >
-        <Plus size={24}/>
+        <Plus size={24} />
       </button>
 
       {isMenuOpen && (
@@ -586,8 +599,8 @@ export default function Dashboard() {
 }
 
 /* REUSABLE OBJECT STYLES */
-const cardStyleClass = 
-  "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-xl p-5 shadow-md";
+const cardStyleClass =
+  "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-xl p-5 shadow-md w-full";
 const modalOverlayClass =
   "fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(5,8,15,0.85)]";
 const modalContentClass =
@@ -595,4 +608,4 @@ const modalContentClass =
 const menuOptionClass =
   "bg-[var(--soc-bg)] border border-[var(--soc-border)] text-[var(--soc-text)] text-left rounded px-3 py-2 cursor-pointer text-sm font-medium transition-all duration-200 ease-in-out";
 const kanbanColumnClass =
-  "flex flex-col gap-4 min-w-[340px] min-h-[300px] flex-0 flex-shrink-0";
+  "flex flex-col gap-4 min-w-[340px] min-h-[300px] flex-none";
