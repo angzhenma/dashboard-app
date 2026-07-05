@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
@@ -10,14 +10,7 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import {
-  Plus,
-  X,
-  Info,
-  Terminal,
-  Maximize2,
-  ShieldCheck,
-} from "lucide-react";
+import { Plus, X, Move, Terminal, Maximize2, ShieldCheck } from "lucide-react";
 import { fetchVulnerableAppsData } from "../mockData";
 import { fetchDevicesByOSData } from "../mockData";
 
@@ -109,53 +102,55 @@ export default function Dashboard() {
       case "threats":
         return (
           <div
-            style={{
-              display: "grid",
-              gap: "16px",
-              gridTemplateColumns: "1fr",
-              marginTop: "16px",
-            }}
+            className="
+              grid
+              gap-4
+              grid-cols-1
+              mt-4
+            "
           >
             {threats.map((threat) => (
               <div
                 key={threat.id}
+                className={`${cardStyleClass}`}
                 style={{
-                  ...cardStyle,
                   borderLeft: `4px solid ${threat.severity === "Critical" ? "var(--soc-red)" : "var(--soc-yellow)"}`,
                 }}
               >
                 <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "12px",
-                  }}
+                  className="
+                  flex
+                  items-center
+                  justify-between
+                  mb-3"
                 >
                   <span
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      fontSize: "14px",
-                      color: "#FFF",
-                      fontWeight: 600,
-                    }}
+                    className="
+                    flex
+                    items-center
+                    gap-2
+                    text-[14px]
+                    font-semibold
+                    text-[var(--soc-text)]"
                   >
                     <Terminal size={16} color="var(--soc-gray)" />
                     {threat.computerName}{" "}
                     <span
-                      style={{ color: "var(--soc-subtext)", fontWeight: 400 }}
+                      className="
+                      text-[var(--soc-subtext)]
+                      font-normal"
                     >
                       ({threat.ipAddress})
                     </span>
                   </span>
                   <span
+                    className="
+                    font-[11px]
+                    font-bold
+                    px-[10px]
+                    py-[4px]
+                    rounded-[12px]"
                     style={{
-                      fontSize: "11px",
-                      fontWeight: "bold",
-                      padding: "4px 10px",
-                      borderRadius: "12px",
                       backgroundColor:
                         threat.severity === "Critical"
                           ? "rgba(239, 68, 68, 0.1)"
@@ -171,23 +166,22 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p
-                  style={{
-                    margin: "0 0 4px 0",
-                    fontSize: "16px",
-                    fontWeight: 500,
-                    color: "#F1F5F9",
-                  }}
+                  className="
+                  mb-1
+                  text-[16px]
+                  font-medium
+                  text-[var(--soc-text)]"
                 >
                   {threat.threatType}
                 </p>
-                <p style={{ margin: 0, fontSize: "13px", color: "#94a3b8" }}>
+                <p className="text-[13px] text-[var(--soc-subtext)]">
                   Flagged Object:{" "}
                   <code
-                    style={{
-                      backgroundColor: "#1E293B",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                    }}
+                    className="
+                    bg-[#1E293B]
+                    px-2
+                    py-1
+                    rounded"
                   >
                     {threat.programName}
                   </code>
@@ -221,57 +215,63 @@ export default function Dashboard() {
         );
       case "vulnerableApps":
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {fetchVulnerableAppsData().then((data) => data.map((app, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  padding: "8px",
-                  backgroundColor: "#1e293b",
-                  borderRadius: "6px",
-                  fontSize: "14px",
-                }}
-              >
-                <span>{app.name}</span>
-                <span
-                  style={{
-                    color:
-                      app.severity === "Critical"
-                        ? "var(--soc-red)"
-                        : app.severity === "High"
-                        ? "var(--soc-orange)"
-                        : app.severity === "Medium"
-                        ? "var(--soc-yellow)"
-                        : "var(--soc-gray)",
-                      fontWeight: "bold",
-                  }}
+          <div className="flex flex-col gap-2">
+            {fetchVulnerableAppsData().then((data) =>
+              data.map((app, i) => (
+                <div
+                  key={i}
+                  className="
+                    flex
+                    justify-between
+                    p-2
+                    bg-[#1E293B]
+                    rounded
+                  "
                 >
-                  {app.hosts} Hosts Affected
-                </span>
-              </div>
-            )))}
+                  <span>{app.name}</span>
+                  <span
+                    className="font-bold"
+                    style={{
+                      color:
+                        app.severity === "Critical"
+                          ? "var(--soc-red)"
+                          : app.severity === "High"
+                            ? "var(--soc-orange)"
+                            : app.severity === "Medium"
+                              ? "var(--soc-yellow)"
+                              : "var(--soc-gray)",
+                    }}
+                  >
+                    {app.hosts} Hosts Affected
+                  </span>
+                </div>
+              )),
+            )}
           </div>
         );
       case "devicesByOs":
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-            {fetchDevicesByOSData().then((data) => data.map((os, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <span style={{ fontSize: "14px" }}>{os.name}</span>
-                <span style={{ fontWeight: "bold", color: os.color }}>
-                  {os.value} Active
-                </span>
-              </div>
-            )))}
+          <div className="flex flex-col gap-2">
+            {fetchDevicesByOSData().then((data) =>
+              data.map((os, i) => (
+                <div
+                  key={i}
+                  className="
+                    flex
+                    justify-between
+                    items-center
+                    p-2
+                    bg-[#1E293B]
+                    rounded
+                  "
+                >
+                  <span className="text-[14px]">{os.name}</span>
+                  <span className="font-bold [os.color]">
+                    {os.value} Active
+                  </span>
+                </div>
+              )),
+            )}
           </div>
         );
       default:
@@ -281,42 +281,43 @@ export default function Dashboard() {
 
   return (
     <div
-      style={{
-        padding: "40px",
-        maxWidth: "100%",
-        margin: "0 auto",
-        position: "relative",
-        minHeight: "100vh",
-      }}
+      className="
+        bg-[var(--soc-background)]
+        my-0
+        mx-auto
+        min-h-screen
+        p-10
+      "
     >
       <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "16px",
-          paddingBottom: "24px",
-          marginBottom: "32px",
-          borderBottom: "1px solid var(--soc-border)",
-        }}
+        className="
+          flex
+          items-center
+          gap-4
+          pb-6
+          mb-8
+          border-b
+          border-[var(--soc-border)]
+        "
       >
         <ShieldCheck size={36} color="var(--soc-green)" />
         <div>
           <h1
-            style={{
-              margin: 0,
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: "var(--soc-text)",
-            }}
+            className="
+              m-0
+              text-[var(--soc-text)]
+              font-bold
+              text-2x
+            "
           >
             SME Security Dashboard
           </h1>
           <p
-            style={{
-              margin: "4px 0 0 0",
-              fontSize: "14px",
-              color: "var(--soc-subtext)",
-            }}
+            className="
+              m-0
+              text-[var(--soc-subtext)]
+              text-sm
+            "
           >
             (Prototype with Mock Data)
           </p>
@@ -325,13 +326,13 @@ export default function Dashboard() {
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <div
-          style={{
-            display: "flex",
-            gap: "24px",
-            alignItems: "flex-start",
-            overflowX: "auto",
-            paddingBottom: "40px",
-          }}
+          className="
+            flex
+            gap-6
+            items-start
+            overflow-x-auto
+            pb-10
+          "
         >
           {Object.keys(columns).map((colId) => (
             <Droppable key={colId} droppableId={colId} direction="vertical">
@@ -339,7 +340,7 @@ export default function Dashboard() {
                 <div
                   {...provided.droppableProps}
                   ref={provided.innerRef}
-                  style={kanbanColumnStyle}
+                  className={`${kanbanColumnClass}`}
                 >
                   {columns[colId].map((card, index) => (
                     <Draggable
@@ -351,8 +352,8 @@ export default function Dashboard() {
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
+                          className={`${cardStyleClass}`}
                           style={{
-                            ...cardStyle,
                             ...provided.draggableProps.style,
                             resize: resizableCards[card.id]
                               ? "horizontal"
@@ -361,68 +362,72 @@ export default function Dashboard() {
                           }}
                         >
                           <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              marginBottom: "16px",
-                              borderBottom: "1px solid rgba(34, 47, 71, 0.4)",
-                              paddingBottom: "8px",
-                            }}
+                            className="
+                              flex
+                              justify-between
+                              items-center
+                              mb-4
+                              border-b
+                              border-[var(--soc-border)]
+                              pb-2
+                            "
                           >
                             <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "10px",
-                              }}
+                              className="
+                                flex
+                                items-center
+                                gap-2.5
+                              "
                             >
                               <div
                                 {...provided.dragHandleProps}
-                                style={{
-                                  cursor: "grab",
-                                  display: "flex",
-                                  alignItems: "center",
-                                }}
+                                className="
+                                  flex
+                                  items-center
+                                  justify-center
+                                  cursor-grab
+                                "
                               >
-                                <Info size={16} color="#475569" />
+                                <Move size={16} color="#475569" />
                               </div>
                               <h4
-                                style={{
-                                  margin: 0,
-                                  fontSize: "15px",
-                                  color: "var(--soc-text)",
-                                  fontWeight: 600,
-                                }}
+                                className="
+                                  m-0
+                                  text-[var(--soc-text)]
+                                  text-[15px]
+                                  font-semibold
+                                "
                               >
                                 {card.title}
                               </h4>
                             </div>
                             <div
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "8px",
-                              }}
+                              className="
+                                flex
+                                items-center
+                                gap-2
+                              "
                             >
                               <button
                                 onClick={() => toggleResize(card.id)}
+                                className="
+                                  bg-none
+                                  border-none
+                                  cursor-pointer
+                                  rounded-[6px]
+                                  flex
+                                  items-center
+                                  justify-center
+                                  p-1
+                                  transition-all duration-200 ease-in-out
+                                "
                                 style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  padding: "6px",
-                                  borderRadius: "6px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
                                   backgroundColor: resizableCards[card.id]
                                     ? "rgba(56, 189, 248, 0.15)"
                                     : "transparent",
                                   color: resizableCards[card.id]
                                     ? "var(--soc-blue)"
                                     : "var(--soc-gray)",
-                                  transition: "all 0.2 ease",
                                 }}
                                 title={
                                   resizableCards[card.id]
@@ -434,14 +439,14 @@ export default function Dashboard() {
                               </button>
                               <button
                                 onClick={() => removeCard(colId, card.id)}
-                                style={{
-                                  background: "none",
-                                  border: "none",
-                                  cursor: "pointer",
-                                  padding: "6px",
-                                  display: "flex",
-                                  color: "var(--soc-gray)",
-                                }}
+                                className="
+                                  bg-none
+                                  border-none
+                                  cursor-pointer
+                                  flex
+                                  [var(--soc-gray)]
+                                  p-[6px]
+                                "
                               >
                                 <X size={16} />
                               </button>
@@ -460,22 +465,38 @@ export default function Dashboard() {
         </div>
       </DragDropContext>
 
-      <button onClick={() => setIsMenuOpen(true)} style={fabStyle}>
-        <Plus size={24} />
+      <button onClick={() => setIsMenuOpen(true)}
+        className="
+          fixed
+          bottom-10
+          left-10
+          w-14
+          h-14
+          rounded-full
+          bg-[var(--soc-blue)]
+          text-[#090d16]
+          flex
+          items-center
+          justify-center
+          shadow-lg
+          z-[100]"
+      >
+        <Plus size={24}/>
       </button>
 
       {isMenuOpen && (
-        <div style={modalOverlayStyle}>
-          <div style={modalContentStyle}>
+        <div className={`${modalOverlayClass}`}>
+          <div className={`${modalContentClass}`}>
             <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "20px",
-                borderBottom: "1px solid var(--soc-border)",
-                paddingBottom: "12px",
-              }}
+              className="
+                flex
+                justify-between
+                items-center
+                mb-5
+                border-b
+                border-[var(--soc-border)]
+                pb-3
+              "
             >
               <h3 style={{ margin: 0, color: "#FFF" }}>
                 Select a Component to Add
@@ -483,15 +504,19 @@ export default function Dashboard() {
               <X
                 size={20}
                 color="var(--soc-subtext)"
-                style={{ cursor: "pointer" }}
+                className="cursor-pointer"
                 onClick={() => setIsMenuOpen(false)}
               />
             </div>
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+              className="
+                flex
+                flex-col
+                gap-2.5
+              "
             >
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard(
                     "vulnerableApps",
@@ -502,7 +527,7 @@ export default function Dashboard() {
                 + List of Potentially Vulnerable Applications
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard(
                     "devicesByOs",
@@ -513,7 +538,7 @@ export default function Dashboard() {
                 + List of Secured Devices by Operating System
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard("metrics", "Operational Metrics Overview")
                 }
@@ -521,7 +546,7 @@ export default function Dashboard() {
                 + Standard Metrics Overview
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard("threats", "Real-Time Incident Feed")
                 }
@@ -529,7 +554,7 @@ export default function Dashboard() {
                 + Threat Data Feed
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard("threatTypePie", "Threats by Type")
                 }
@@ -537,7 +562,7 @@ export default function Dashboard() {
                 + Threat Type Pie Chart
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard("unresolvedPie", "Unresolved Threats")
                 }
@@ -545,7 +570,7 @@ export default function Dashboard() {
                 + Unresolved Threats Pie Chart
               </button>
               <button
-                style={menuOptionStyle}
+                className={`${menuOptionClass}`}
                 onClick={() =>
                   addCardToDashboard("severityBar", "Threats by Severity")
                 }
@@ -561,66 +586,13 @@ export default function Dashboard() {
 }
 
 /* REUSABLE OBJECT STYLES */
-const cardStyle: React.CSSProperties = {
-  backgroundColor: "var(--soc-card)",
-  border: "1px solid var(--soc-border)",
-  borderRadius: "12px",
-  padding: "20px",
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.3)",
-};
-const modalOverlayStyle: React.CSSProperties = {
-  position: "fixed",
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: "rgba(5, 8, 15, 0.85)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-const modalContentStyle: React.CSSProperties = {
-  backgroundColor: "var(--soc-card)",
-  border: "1px solid var(--soc-border)",
-  borderRadius: "16px",
-  padding: "28px",
-  width: "100%",
-  maxWidth: "480px",
-};
-const menuOptionStyle: React.CSSProperties = {
-  backgroundColor: "var(--soc-bg)",
-  border: "1px solid var(--soc-border)",
-  color: "var(--soc-text)",
-  textAlign: "left",
-  borderRadius: "4px",
-  padding: "12px",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: 500,
-  transition: "border 0.2s ease",
-};
-const kanbanColumnStyle: React.CSSProperties = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "16px",
-  minWidth: "340px",
-  minHeight: "300px",
-  flex: "0 0 auto",
-};
-const fabStyle: React.CSSProperties = {
-  position: "fixed",
-  bottom: "40px",
-  left: "40px",
-  width: "56px",
-  height: "56px",
-  borderRadius: "50%",
-  backgroundColor: "var(--soc-blue)",
-  color: "#090d16",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.5)",
-  cursor: "pointer",
-  zIndex: 100,
-};
+const cardStyleClass = 
+  "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-xl p-5 shadow-md";
+const modalOverlayClass =
+  "fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(5,8,15,0.85)]";
+const modalContentClass =
+  "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-lg p-7 w-full max-w-[480px]";
+const menuOptionClass =
+  "bg-[var(--soc-bg)] border border-[var(--soc-border)] text-[var(--soc-text)] text-left rounded px-3 py-2 cursor-pointer text-sm font-medium transition-all duration-200 ease-in-out";
+const kanbanColumnClass =
+  "flex flex-col gap-4 min-w-[340px] min-h-[300px] flex-0 flex-shrink-0";
