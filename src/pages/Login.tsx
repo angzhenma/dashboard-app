@@ -36,7 +36,7 @@ export function Login() {
   };
 
   if (isAuthenticated) {
-    return <Dashboard />;
+    return <Dashboard /*onLogout={() => setIsAuthenticated(false)}*/ />;
   }
 
   return (

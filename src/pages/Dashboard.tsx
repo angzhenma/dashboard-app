@@ -10,7 +10,15 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import { Plus, X, Move, Terminal, Maximize2, ShieldCheck } from "lucide-react";
+import {
+  Plus,
+  X,
+  Move,
+  Terminal,
+  Maximize2,
+  ShieldCheck,
+  /*LogOut,*/
+} from "lucide-react";
 import { fetchVulnerableAppsData } from "../mockData";
 import { fetchDevicesByOSData } from "../mockData";
 
@@ -35,10 +43,23 @@ export interface DeviceByOS {
 export default function Dashboard() {
   const [columns, setColumns] = useState<{
     [key: string]: DashboardCardItem[];
-  }>({
-    "col-1": [],
-    "col-2": [],
-    "col-3": [],
+  }>(() => {
+    const savedLayout = localStorage.getItem("dashboardLayout");
+    if (savedLayout) {
+      try {
+        return JSON.parse(savedLayout);
+      } catch (e) {
+        console.error(
+          "Failed to parse saved dashboard layout:",
+          e
+        );
+      }
+    }
+    return {
+      "col-1": [],
+      "col-2": [],
+      "col-3": [],
+    };
   });
 
   useEffect(() => {
@@ -63,8 +84,12 @@ export default function Dashboard() {
   } = useDashboardData();
 
   useEffect(() => {
-    fetchVulnerableAppsData().then((data) => {setVulnerableApps(data)});
-    fetchDevicesByOSData().then((data) => {setDevicesByOS(data)});
+    fetchVulnerableAppsData().then((data) => {
+      setVulnerableApps(data);
+    });
+    fetchDevicesByOSData().then((data) => {
+      setDevicesByOS(data);
+    });
   }, []);
 
   const handleDragEnd = (result: DropResult) => {
@@ -241,43 +266,45 @@ export default function Dashboard() {
         return (
           <div className="flex flex-col gap-2">
             {vulnerableApps.map((app, i) => (
-                <div
-                  key={i}
-                  className="
+              <div
+                key={i}
+                className="
                     flex
                     justify-between
                     p-2
                     bg-slate-800
                     rounded
                   "
+              >
+                <span className="text-sm text-[var(--soc-text)]">
+                  {app.name}
+                </span>
+                <span
+                  className="font-bold text-sm"
+                  style={{
+                    color:
+                      app.severity === "Critical"
+                        ? "var(--soc-red)"
+                        : app.severity === "High"
+                          ? "var(--soc-orange)"
+                          : app.severity === "Medium"
+                            ? "var(--soc-yellow)"
+                            : "var(--soc-gray)",
+                  }}
                 >
-                  <span className="text-sm text-[var(--soc-text)]">{app.name}</span>
-                  <span
-                    className="font-bold text-sm"
-                    style={{
-                      color:
-                        app.severity === "Critical"
-                          ? "var(--soc-red)"
-                          : app.severity === "High"
-                            ? "var(--soc-orange)"
-                            : app.severity === "Medium"
-                              ? "var(--soc-yellow)"
-                              : "var(--soc-gray)",
-                    }}
-                  >
-                    {app.hosts} Hosts Affected
-                  </span>
-                </div>
-              ))}
+                  {app.hosts} Hosts Affected
+                </span>
+              </div>
+            ))}
           </div>
         );
       case "devicesByOs":
         return (
           <div className="flex flex-col gap-2">
             {devicesByOS.map((os, i) => (
-                <div
-                  key={i}
-                  className="
+              <div
+                key={i}
+                className="
                     flex
                     justify-between
                     items-center
@@ -285,13 +312,15 @@ export default function Dashboard() {
                     bg-[#1E293B]
                     rounded
                   "
-                >
-                  <span className="text-[14px] text-[var(--soc-text)]">{os.name}</span>
-                  <span className="font-bold text-sm" style={{ color: os.color }}>
-                    {os.value} Active
-                  </span>
-                </div>
-              ))}
+              >
+                <span className="text-[14px] text-[var(--soc-text)]">
+                  {os.name}
+                </span>
+                <span className="font-bold text-sm" style={{ color: os.color }}>
+                  {os.value} Active
+                </span>
+              </div>
+            ))}
           </div>
         );
       default:
@@ -441,8 +470,8 @@ export default function Dashboard() {
                                   transition-all duration-200 ease-in-out
                                   ${
                                     resizableCards[card.id]
-                                    ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30"
-                                    : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
+                                      ? "bg-sky-500/20 text-sky-400 ring-1 ring-sky-500/30"
+                                      : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
                                   }
                                 `}
                                 title={

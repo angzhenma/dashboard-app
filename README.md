@@ -31,6 +31,6 @@ Swapping in a real backend later should mostly mean rewriting `mockData.ts` to c
 ## Known Limitations / Next Steps
 
 - **No persistence:** board layout (which cards exist, their column/order) resets on page reload — it only lives in React state.
-- **No backend:** all data is mocked; there's no real threat ingestion, auth, or API layer yet.
+- **No backend:** all data is mocked; there's no real threat ingestion or API layer yet.
 - **No tests:** no unit or integration tests currently exist for components or the data hook.
 - **No role-based access:** user role logic exists (in the mock data), but there is no exclusive role-based permissions set yet.
