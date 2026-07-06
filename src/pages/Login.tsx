@@ -42,10 +42,8 @@ export function Login() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-4 font-sans text-slate-200">
       
-      {/* Frosted Glass Login Card */}
       <div className="w-full max-w-md bg-slate-900/60 backdrop-blur-md border border-slate-700/60 rounded-2xl p-8 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         
-        {/* Header Section */}
         <div className="flex flex-col items-center mb-8">
           <ShieldUser size={48} className="text-sky-500 mb-4 drop-shadow-[0_0_15px_rgba(56,189,248,0.4)]" />
           <h2 className="text-2xl font-bold text-white tracking-tight">SOC Gateway</h2>
@@ -77,8 +75,17 @@ export function Login() {
 
           {/* Password Input Group */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Passcode
+            <label
+              htmlFor="password"
+              className="
+                text-xs
+                font-semibold
+                text-slate-400
+                uppercase
+                tracking-wider
+              "
+            >
+            Passcode
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">

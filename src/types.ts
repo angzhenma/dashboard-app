@@ -49,3 +49,19 @@ export interface LoginCredentials {
   password: string;
   role: 'admin' | 'developer' | 'analyst';
 };
+
+export type UserRole = 'admin' | 'developer' | 'analyst';
+
+export interface Profile {
+  id: string;
+  username: string;
+  role: UserRole;
+}
+
+export interface DashboardCardItem {
+  id: string;
+  type: string;
+  title: string;
+}
+
+export type DashboardColumns = Record<string, DashboardCardItem[]>;
