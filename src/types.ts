@@ -14,6 +14,7 @@ export interface SecurityThreat {
   detectedTime: string;
   status: 'Active' | 'Mitigated' | 'Suspended';
 }
+
 export interface PieChartData {
   name: string;
   value: number;
@@ -50,12 +51,33 @@ export interface LoginCredentials {
   role: 'admin' | 'developer' | 'analyst';
 };
 
-export type UserRole = 'admin' | 'developer' | 'analyst';
-
 export interface Profile {
   id: string;
   display_name: string;
-  role: UserRole;
+  role_id: string;
+  role_name: string;
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  created_at: string;
+}
+
+export interface Permission {
+  key: string;
+  description: string;
+}
+
+export interface RegisteredUser {
+  id: string;
+  email: string;
+  display_name: string;
+  role_id: string;
+  role_name: string;
+  created_at: string;
 }
 
 export interface DashboardCardItem {

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useBoardLayout } from "../hooks/useBoardLayout";
-import { useAuth } from "../context/AuthContext";
-import { canEditBoard, roleLabel } from "../utils/permissions";
+import { useAuth } from "../context/useAuth";
+import { canEditBoard, canViewUsers, canManageRoles } from "../utils/permissions";
+import AdminPanel from "./AdminPanel";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
 import UnresolvedThreatsPieChart from "../components/UnresolvedThreatsPieChart";
@@ -21,20 +22,19 @@ import {
   Maximize2,
   ShieldCheck,
   LogOut,
+  Users,
 } from "lucide-react";
 import {
   fetchVulnerableAppsData,
   fetchDevicesByOSData,
 } from "../api/dashboardApi";
-import type {
-  DashboardCardItem,
-  VulnerableAppsData,
-  DevicesByOS,
-} from "../types";
+import type { DashboardCardItem, VulnerableAppsData, DevicesByOS } from "../types";
 
 export default function Dashboard() {
-  const { session, profile, signOut } = useAuth();
-  const canEdit = canEditBoard(profile?.role);
+  const { session, profile, permissions, signOut } = useAuth();
+  const canEdit = canEditBoard(permissions);
+  const canAccessAdmin = canViewUsers(permissions) || canManageRoles(permissions);
+  const [view, setView] = useState<"board" | "admin">("board");
   const { columns, setColumns, isLoadingLayout } = useBoardLayout(
     session?.user.id,
   );
@@ -310,6 +310,10 @@ export default function Dashboard() {
     }
   };
 
+  if (view === "admin") {
+    return <AdminPanel onBack={() => setView("board")} />;
+  }
+
   return (
     <div
       className="
@@ -363,9 +367,32 @@ export default function Dashboard() {
               {profile?.display_name ?? session?.user.email}
             </p>
             <p className="m-0 mt-0.5 text-xs text-[var(--soc-subtext)]">
-              {roleLabel(profile?.role)}
+              {profile?.role_name}
             </p>
           </div>
+          {canAccessAdmin && (
+            <button
+              onClick={() => setView("admin")}
+              className="
+                flex
+                items-center
+                gap-1.5
+                bg-transparent
+                border
+                border-[var(--soc-border)]
+                rounded-lg
+                px-3.5
+                py-2
+                text-[var(--soc-subtext)]
+                text-[13px]
+                cursor-pointer
+                hover:text-[var(--soc-text)]
+              "
+            >
+              <Users size={14} />
+              Manage Users
+            </button>
+          )}
           <button
             onClick={signOut}
             className="
@@ -395,45 +422,45 @@ export default function Dashboard() {
           Loading your dashboard layout...
         </p>
       ) : (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div
-            className="
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div
+          className="
             flex
             gap-6
             items-start
             overflow-x-auto
             pb-10
           "
-          >
-            {Object.keys(columns).map((colId) => (
-              <Droppable key={colId} droppableId={colId} direction="vertical">
-                {(provided) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    className={`${kanbanColumnClass}`}
-                  >
-                    {columns[colId].map((card, index) => (
-                      <Draggable
-                        key={card.id}
-                        draggableId={card.id}
-                        index={index}
-                      >
-                        {(provided) => (
+        >
+          {Object.keys(columns).map((colId) => (
+            <Droppable key={colId} droppableId={colId} direction="vertical">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className={`${kanbanColumnClass}`}
+                >
+                  {columns[colId].map((card, index) => (
+                    <Draggable
+                      key={card.id}
+                      draggableId={card.id}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`${cardStyleClass}`}
+                          style={{
+                            ...provided.draggableProps.style,
+                            resize: resizableCards[card.id]
+                              ? "horizontal"
+                              : "none",
+                            overflow: "hidden",
+                          }}
+                        >
                           <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            className={`${cardStyleClass}`}
-                            style={{
-                              ...provided.draggableProps.style,
-                              resize: resizableCards[card.id]
-                                ? "horizontal"
-                                : "none",
-                              overflow: "hidden",
-                            }}
-                          >
-                            <div
-                              className="
+                            className="
                               flex
                               justify-between
                               items-center
@@ -442,46 +469,46 @@ export default function Dashboard() {
                               border-[var(--soc-border)]
                               pb-2
                             "
-                            >
-                              <div
-                                className="
+                          >
+                            <div
+                              className="
                                 flex
                                 items-center
                                 gap-2.5
                               "
-                              >
-                                <div
-                                  {...(canEdit ? provided.dragHandleProps : {})}
-                                  className={`
+                            >
+                              <div
+                                {...(canEdit ? provided.dragHandleProps : {})}
+                                className={`
                                   flex
                                   items-center
                                   justify-center
                                   ${canEdit ? "cursor-grab" : "cursor-default"}
                                 `}
-                                >
-                                  <Move size={16} color="#475569" />
-                                </div>
-                                <h4
-                                  className="
+                              >
+                                <Move size={16} color="#475569" />
+                              </div>
+                              <h4
+                                className="
                                   m-0
                                   text-[var(--soc-text)]
                                   text-[15px]
                                   font-semibold
                                 "
-                                >
-                                  {card.title}
-                                </h4>
-                              </div>
-                              <div
-                                className="
+                              >
+                                {card.title}
+                              </h4>
+                            </div>
+                            <div
+                              className="
                                 flex
                                 items-center
                                 gap-2
                               "
-                              >
-                                <button
-                                  onClick={() => toggleResize(card.id)}
-                                  className={`
+                            >
+                              <button
+                                onClick={() => toggleResize(card.id)}
+                                className={`
                                   border-none
                                   flex
                                   items-center
@@ -496,18 +523,18 @@ export default function Dashboard() {
                                       : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
                                   }
                                 `}
-                                  title={
-                                    resizableCards[card.id]
-                                      ? "Lock Width"
-                                      : "Enable Resizing"
-                                  }
-                                >
-                                  <Maximize2 size={16} />
-                                </button>
-                                {canEdit && (
-                                  <button
-                                    onClick={() => removeCard(colId, card.id)}
-                                    className="
+                                title={
+                                  resizableCards[card.id]
+                                    ? "Lock Width"
+                                    : "Enable Resizing"
+                                }
+                              >
+                                <Maximize2 size={16} />
+                              </button>
+                              {canEdit && (
+                                <button
+                                  onClick={() => removeCard(colId, card.id)}
+                                  className="
                                     bg-none
                                     border-none
                                     cursor-pointer
@@ -515,24 +542,24 @@ export default function Dashboard() {
                                     text-[var(--soc-gray)]
                                     p-[6px]
                                   "
-                                  >
-                                    <X size={16} />
-                                  </button>
-                                )}
-                              </div>
+                                >
+                                  <X size={16} />
+                                </button>
+                              )}
                             </div>
-                            <div>{renderCardContent(card.type)}</div>
                           </div>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            ))}
-          </div>
-        </DragDropContext>
+                          <div>{renderCardContent(card.type)}</div>
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          ))}
+        </div>
+      </DragDropContext>
       )}
 
       {canEdit && (

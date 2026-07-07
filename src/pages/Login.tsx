@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import Dashboard from "./Dashboard";
-import { fetchUserCredentials } from "../mockData";
-import { LogIn, ShieldUser, Lock, User } from "lucide-react";
+import { useAuth } from "../context/useAuth";
+import { LogIn, ShieldUser, Lock, Mail } from "lucide-react";
 
 export function Login() {
-  const [username, setUsername] = useState("");
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -14,30 +13,19 @@ export function Login() {
     document.title = "Login - Security Operations Center Dashboard";
   }, []);
 
-  const userAuth = async (user: string, pass: string) => {
-    const credentials = await fetchUserCredentials();
-    const [credential] = Array.isArray(credentials) ? credentials : [credentials];
-    return credential?.username === user && credential?.password === pass;
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault(); // prevents the browser from refreshing the page
     setIsLoading(true);
     setError("");
 
-    const isValid = await userAuth(username, password);
-    
-    if (isValid) {
-      setIsAuthenticated(true);
-    } else {
+    try {
+      await signIn(email, password);
+    } catch {
       setError("Invalid security credentials. Access denied.");
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
-
-  if (isAuthenticated) {
-    return <Dashboard /*onLogout={() => setIsAuthenticated(false)}*/ />;
-  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-slate-950 p-4 font-sans text-slate-200">
@@ -52,22 +40,22 @@ export function Login() {
 
         <form onSubmit={handleLogin} className="flex flex-col gap-5">
           
-          {/* Username Input Group */}
+          {/* Email Input Group */}
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="username" className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-              Operator ID
+            <label htmlFor="email" className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              Operator Email
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-500">
-                <User size={16} />
+                <Mail size={16} />
               </div>
               <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-slate-950/50 border border-slate-700 rounded-lg py-2.5 pl-10 pr-4 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all placeholder:text-slate-600"
-                placeholder="Enter username"
+                placeholder="you@example.com"
                 required
               />
             </div>

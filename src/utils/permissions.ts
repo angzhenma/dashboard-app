@@ -1,25 +1,29 @@
-import type { UserRole } from "../types";
-
-const EDITOR_ROLES: UserRole[] = ["admin", "developer"];
-
-export function canEditBoard(role: UserRole | null | undefined): boolean {
-  if (!role) return false;
-  return EDITOR_ROLES.includes(role);
+export function hasPermission(
+    permissions: string[] | null | undefined,
+    key: string,
+): boolean {
+    if (!permissions) return false;
+    return permissions.includes(key);
 }
 
-export function canManageUsers(role: UserRole | null | undefined): boolean {
-    return role === "admin";
+export function canEditBoard(permissions: string[] | null | undefined): boolean {
+  return hasPermission(permissions, "board.edit");
 }
 
-export function roleLabel(role: UserRole | null | undefined): string {
-    switch (role) {
-        case "admin":
-            return "Administrator";
-        case "developer":
-            return "Developer";
-        case "analyst":
-            return "Analyst";
-        default:
-            return "Unknown Role";
-    }
+export function canWriteThreatData(
+    permissions: string[] | null | undefined,
+): boolean {
+    return hasPermission(permissions, "threats.write");
+}
+
+export function canViewUsers(permissions: string[] | null | undefined): boolean {
+    return hasPermission(permissions, "users.view");
+}
+
+export function canManageUsers(permissions: string[] | null | undefined): boolean {
+    return hasPermission(permissions, "users.manage");
+}
+
+export function canManageRoles(permissions: string[] | null | undefined): boolean {
+    return hasPermission(permissions, "roles.manage");
 }

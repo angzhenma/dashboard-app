@@ -1,51 +1,63 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  useCallback,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, useCallback, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabaseClient";
 import type { Profile } from "../types";
-
-interface AuthContextValue {
-  session: Session | null;
-  profile: Profile | null;
-  isAuthenticated: boolean;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+import { AuthContext } from "./authContextObject";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, display_name, role")
-      .eq("id", userId)
-      .single();
+  const loadProfileAndPermissions = useCallback(async (userId: string) => {
+    const [{ data: profileData, error: profileError }, { data: permData, error: permError }] =
+      await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, display_name, role_id, roles(name)")
+          .eq("id", userId)
+          .single(),
+        supabase.rpc("current_user_permissions"),
+      ]);
 
-    if (error) {
-      console.error("Failed to load profile:", error.message);
+    if (profileError) {
+      console.error("Failed to load profile:", profileError.message);
       setProfile(null);
-      return;
+    } else if (profileData) {
+      const rolesField = (profileData as { roles: { name: string } | { name: string }[] | null })
+        .roles;
+      const roleName = Array.isArray(rolesField)
+        ? rolesField[0]?.name
+        : rolesField?.name;
+
+      setProfile({
+        id: profileData.id,
+        display_name: profileData.display_name,
+        role_id: profileData.role_id,
+        role_name: roleName ?? "Unknown",
+      });
     }
-    setProfile(data as Profile);
+
+    if (permError) {
+      console.error("Failed to load permissions:", permError.message);
+      setPermissions([]);
+    } else {
+      setPermissions((permData ?? []).map((row: { current_user_permissions: string }) => row.current_user_permissions));
+    }
   }, []);
+
+  const refreshProfile = useCallback(async () => {
+    if (session?.user) {
+      await loadProfileAndPermissions(session.user.id);
+    }
+  }, [session, loadProfileAndPermissions]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        loadProfile(session.user.id).finally(() => setLoading(false));
+        loadProfileAndPermissions(session.user.id).finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -56,14 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        loadProfile(session.user.id);
+        loadProfileAndPermissions(session.user.id);
       } else {
         setProfile(null);
+        setPermissions([]);
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [loadProfile]);
+  }, [loadProfileAndPermissions]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -82,21 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         session,
         profile,
+        permissions,
         isAuthenticated: session !== null,
         loading,
         signIn,
         signOut,
+        refreshProfile,
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
 }
