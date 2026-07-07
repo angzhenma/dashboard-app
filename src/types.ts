@@ -54,7 +54,7 @@ export type UserRole = 'admin' | 'developer' | 'analyst';
 
 export interface Profile {
   id: string;
-  username: string;
+  display_name: string;
   role: UserRole;
 }
 
