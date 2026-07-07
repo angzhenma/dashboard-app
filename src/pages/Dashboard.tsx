@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
+import { useBoardLayout } from "../hooks/useBoardLayout";
+import { useAuth } from "../context/AuthContext";
+import { canEditBoard, roleLabel } from "../utils/permissions";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
 import UnresolvedThreatsPieChart from "../components/UnresolvedThreatsPieChart";
@@ -17,50 +20,24 @@ import {
   Terminal,
   Maximize2,
   ShieldCheck,
-  /*LogOut,*/
+  LogOut,
 } from "lucide-react";
-import { fetchVulnerableAppsData } from "../mockData";
-import { fetchDevicesByOSData } from "../mockData";
-
-export interface DashboardCardItem {
-  id: string;
-  type: string;
-  title: string;
-}
-
-export interface VulnerableApp {
-  name: string;
-  severity: string;
-  hosts: number;
-}
-
-export interface DeviceByOS {
-  name: string;
-  value: number;
-  color: string;
-}
+import {
+  fetchVulnerableAppsData,
+  fetchDevicesByOSData,
+} from "../api/dashboardApi";
+import type {
+  DashboardCardItem,
+  VulnerableAppsData,
+  DevicesByOS,
+} from "../types";
 
 export default function Dashboard() {
-  const [columns, setColumns] = useState<{
-    [key: string]: DashboardCardItem[];
-  }>(() => {
-    const savedLayout = localStorage.getItem("dashboardLayout");
-    if (savedLayout) {
-      try {
-        return JSON.parse(savedLayout);
-      } catch (e) {
-        console.error(
-          "Failed to parse saved dashboard layout:",
-          e
-        );
-      }
-    }
-    return {
-      "col-1": [],
-      "col-2": [],
-      "col-3": [],
-    };
-  });
+  const { session, profile, signOut } = useAuth();
+  const canEdit = canEditBoard(profile?.role);
+  const { columns, setColumns, isLoadingLayout } = useBoardLayout(
+    session?.user.id,
+  );
 
   useEffect(() => {
     document.title = "Security Operations Center Dashboard";
@@ -71,8 +48,10 @@ export default function Dashboard() {
     {},
   );
 
-  const [vulnerableApps, setVulnerableApps] = useState<VulnerableApp[]>([]);
-  const [devicesByOS, setDevicesByOS] = useState<DeviceByOS[]>([]);
+  const [vulnerableApps, setVulnerableApps] = useState<VulnerableAppsData[]>(
+    [],
+  );
+  const [devicesByOS, setDevicesByOS] = useState<DevicesByOS[]>([]);
 
   const {
     metrics,
@@ -93,6 +72,7 @@ export default function Dashboard() {
   }, []);
 
   const handleDragEnd = (result: DropResult) => {
+    if (!canEdit) return;
     const { source, destination } = result;
     if (!destination) return;
 
@@ -119,6 +99,7 @@ export default function Dashboard() {
   };
 
   const addCardToDashboard = (type: string, title: string) => {
+    if (!canEdit) return;
     const newCard: DashboardCardItem = {
       id: `card-${Date.now()}`,
       type,
@@ -132,6 +113,7 @@ export default function Dashboard() {
   };
 
   const removeCard = (colId: string, cardId: string) => {
+    if (!canEdit) return;
     const updatedCards = columns[colId].filter((card) => card.id !== cardId);
     setColumns({
       ...columns,
@@ -342,6 +324,7 @@ export default function Dashboard() {
         className="
           flex
           items-center
+          justify-between
           gap-4
           pb-6
           mb-8
@@ -349,69 +332,108 @@ export default function Dashboard() {
           border-[var(--soc-border)]
         "
       >
-        <ShieldCheck size={36} color="var(--soc-green)" />
-        <div>
-          <h1
+        <div className="flex items-center gap-4">
+          <ShieldCheck size={36} color="var(--soc-green)" />
+          <div>
+            <h1
+              className="
+                m-0
+                text-[var(--soc-text)]
+                font-bold
+                text-2xl
+              "
+            >
+              SME Security Dashboard
+            </h1>
+            <p
+              className="
+                m-0
+                text-[var(--soc-subtext)]
+                text-sm
+              "
+            >
+              Live Data via Supabase
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="text-right">
+            <p className="m-0 text-sm font-semibold text-[var(--soc-text)]">
+              {profile?.display_name ?? session?.user.email}
+            </p>
+            <p className="m-0 mt-0.5 text-xs text-[var(--soc-subtext)]">
+              {roleLabel(profile?.role)}
+            </p>
+          </div>
+          <button
+            onClick={signOut}
             className="
-              m-0
-              text-[var(--soc-text)]
-              font-bold
-              text-2xl
-            "
-          >
-            SME Security Dashboard
-          </h1>
-          <p
-            className="
-              m-0
+              flex
+              items-center
+              gap-1.5
+              bg-transparent
+              border
+              border-[var(--soc-border)]
+              rounded-lg
+              px-3.5
+              py-2
               text-[var(--soc-subtext)]
-              text-sm
+              text-[13px]
+              cursor-pointer
+              hover:text-[var(--soc-text)]
             "
           >
-            (Prototype with Mock Data)
-          </p>
+            <LogOut size={14} />
+            Log Out
+          </button>
         </div>
       </header>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div
-          className="
+      {isLoadingLayout ? (
+        <p className="text-[var(--soc-subtext)] text-sm">
+          Loading your dashboard layout...
+        </p>
+      ) : (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div
+            className="
             flex
             gap-6
             items-start
             overflow-x-auto
             pb-10
           "
-        >
-          {Object.keys(columns).map((colId) => (
-            <Droppable key={colId} droppableId={colId} direction="vertical">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className={`${kanbanColumnClass}`}
-                >
-                  {columns[colId].map((card, index) => (
-                    <Draggable
-                      key={card.id}
-                      draggableId={card.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`${cardStyleClass}`}
-                          style={{
-                            ...provided.draggableProps.style,
-                            resize: resizableCards[card.id]
-                              ? "horizontal"
-                              : "none",
-                            overflow: "hidden",
-                          }}
-                        >
+          >
+            {Object.keys(columns).map((colId) => (
+              <Droppable key={colId} droppableId={colId} direction="vertical">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={`${kanbanColumnClass}`}
+                  >
+                    {columns[colId].map((card, index) => (
+                      <Draggable
+                        key={card.id}
+                        draggableId={card.id}
+                        index={index}
+                      >
+                        {(provided) => (
                           <div
-                            className="
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            className={`${cardStyleClass}`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              resize: resizableCards[card.id]
+                                ? "horizontal"
+                                : "none",
+                              overflow: "hidden",
+                            }}
+                          >
+                            <div
+                              className="
                               flex
                               justify-between
                               items-center
@@ -420,46 +442,46 @@ export default function Dashboard() {
                               border-[var(--soc-border)]
                               pb-2
                             "
-                          >
-                            <div
-                              className="
+                            >
+                              <div
+                                className="
                                 flex
                                 items-center
                                 gap-2.5
                               "
-                            >
-                              <div
-                                {...provided.dragHandleProps}
-                                className="
+                              >
+                                <div
+                                  {...(canEdit ? provided.dragHandleProps : {})}
+                                  className={`
                                   flex
                                   items-center
                                   justify-center
-                                  cursor-grab
-                                "
-                              >
-                                <Move size={16} color="#475569" />
-                              </div>
-                              <h4
-                                className="
+                                  ${canEdit ? "cursor-grab" : "cursor-default"}
+                                `}
+                                >
+                                  <Move size={16} color="#475569" />
+                                </div>
+                                <h4
+                                  className="
                                   m-0
                                   text-[var(--soc-text)]
                                   text-[15px]
                                   font-semibold
                                 "
-                              >
-                                {card.title}
-                              </h4>
-                            </div>
-                            <div
-                              className="
+                                >
+                                  {card.title}
+                                </h4>
+                              </div>
+                              <div
+                                className="
                                 flex
                                 items-center
                                 gap-2
                               "
-                            >
-                              <button
-                                onClick={() => toggleResize(card.id)}
-                                className={`
+                              >
+                                <button
+                                  onClick={() => toggleResize(card.id)}
+                                  className={`
                                   border-none
                                   flex
                                   items-center
@@ -474,63 +496,68 @@ export default function Dashboard() {
                                       : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
                                   }
                                 `}
-                                title={
-                                  resizableCards[card.id]
-                                    ? "Lock Width"
-                                    : "Enable Resizing"
-                                }
-                              >
-                                <Maximize2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => removeCard(colId, card.id)}
-                                className="
-                                  bg-none
-                                  border-none
-                                  cursor-pointer
-                                  flex
-                                  text-[var(--soc-gray)]
-                                  p-[6px]
-                                "
-                              >
-                                <X size={16} />
-                              </button>
+                                  title={
+                                    resizableCards[card.id]
+                                      ? "Lock Width"
+                                      : "Enable Resizing"
+                                  }
+                                >
+                                  <Maximize2 size={16} />
+                                </button>
+                                {canEdit && (
+                                  <button
+                                    onClick={() => removeCard(colId, card.id)}
+                                    className="
+                                    bg-none
+                                    border-none
+                                    cursor-pointer
+                                    flex
+                                    text-[var(--soc-gray)]
+                                    p-[6px]
+                                  "
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
+                            <div>{renderCardContent(card.type)}</div>
                           </div>
-                          <div>{renderCardContent(card.type)}</div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
-      </DragDropContext>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+        </DragDropContext>
+      )}
 
-      <button
-        onClick={() => setIsMenuOpen(true)}
-        className="
-          fixed
-          bottom-10
-          left-10
-          w-14
-          h-14
-          rounded-full
-          bg-[var(--soc-blue)]
-          text-[#090d16]
-          flex
-          items-center
-          justify-center
-          shadow-lg
-          z-[100]"
-      >
-        <Plus size={24} />
-      </button>
+      {canEdit && (
+        <button
+          onClick={() => setIsMenuOpen(true)}
+          className="
+            fixed
+            bottom-10
+            left-10
+            w-14
+            h-14
+            rounded-full
+            bg-[var(--soc-blue)]
+            text-[#090d16]
+            flex
+            items-center
+            justify-center
+            shadow-lg
+            z-[100]"
+        >
+          <Plus size={24} />
+        </button>
+      )}
 
-      {isMenuOpen && (
+      {canEdit && isMenuOpen && (
         <div className={`${modalOverlayClass}`}>
           <div className={`${modalContentClass}`}>
             <div
