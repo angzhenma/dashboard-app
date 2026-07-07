@@ -30,7 +30,7 @@ export function computeMetrics(threats: SecurityThreat[]): DashboardMetrics {
   };
 }
 
-export function computeThreatTypeData(
+export function computeThreatsTypeData(
   threats: SecurityThreat[],
 ): PieChartData[] {
   const counts = new Map<string, number>();
@@ -44,7 +44,7 @@ export function computeThreatTypeData(
   }));
 }
 
-export function computerUnresolvedStatusData(
+export function computeUnresolvedStatusData(
   threats: SecurityThreat[],
 ): PieChartData[] {
   const statusMeta: Record<string, { label: string; color: string }> = {
@@ -63,7 +63,7 @@ export function computerUnresolvedStatusData(
   }));
 }
 
-export function copmuteThreatsSeverityData(
+export function computeThreatsSeverityData(
   threats: SecurityThreat[],
 ): BarChartData[] {
   const order: BarChartData["severity"][] = [
@@ -126,11 +126,11 @@ export async function fetchVulnerableAppsData(): Promise<VulnerableAppsData[]> {
 }
 
 export async function fetchDevicesByOSData(): Promise<DevicesByOS[]> {
-    const { data, error } = await supabase
+  const { data, error } = await supabase
     .from("devices_by_os")
     .select("name, value, color")
     .order("value", { ascending: false });
 
-    if (error) throw error;
-    return data as DevicesByOS[];
+  if (error) throw error;
+  return data as DevicesByOS[];
 }

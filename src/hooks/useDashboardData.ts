@@ -1,11 +1,18 @@
 import { useState, useEffect } from "react";
+// import {
+//   fetchMockThreats,
+//   fetchDashboardMetrics,
+//   fetchThreatsTypeData,
+//   fetchUnresolvedStatusData,
+//   fetchThreatsSeverityData,
+// } from "../mockData";
 import {
-  fetchMockThreats,
-  fetchDashboardMetrics,
-  fetchThreatsTypeData,
-  fetchUnresolvedStatusData,
-  fetchThreatsSeverityData,
-} from "../mockData";
+  fetchThreats,
+  computeMetrics,
+  computeThreatsTypeData,
+  computeUnresolvedStatusData,
+  computeThreatsSeverityData,
+} from "../api/dashboardApi";
 import type {
   SecurityThreat,
   DashboardMetrics,
@@ -24,30 +31,34 @@ export function useDashboardData() {
     BarChartData[]
   >([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetchMockThreats(),
-      fetchDashboardMetrics(),
-      fetchThreatsTypeData(),
-      fetchUnresolvedStatusData(),
-      fetchThreatsSeverityData(),
-    ]).then(
-      ([
-        threatsRes,
-        metricsRes,
-        typesDataRes,
-        statusDataRes,
-        severityDataRes,
-      ]) => {
+    let cancelled = false;
+
+    fetchThreats()
+      .then((threatsRes) => {
+        if (cancelled) return;
         setThreats(threatsRes);
-        setMetrics(metricsRes);
-        setThreatsTypeData(typesDataRes);
-        setUnresolvedStatusData(statusDataRes);
-        setThreatsSeverityData(severityDataRes);
-        setLoading(false);
-      },
-    );
+        setMetrics(computeMetrics(threatsRes));
+        setThreatsTypeData(computeThreatsTypeData(threatsRes));
+        setUnresolvedStatusData(computeUnresolvedStatusData(threatsRes));
+        setThreatsSeverityData(computeThreatsSeverityData(threatsRes));
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("Failed to load dashboard data:", err);
+        setError(
+          err instanceof Error ? err.message : "failed to load dashboard data.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return {
@@ -57,5 +68,6 @@ export function useDashboardData() {
     unresolvedStatusData,
     threatsSeverityData,
     loading,
+    error,
   };
 }
