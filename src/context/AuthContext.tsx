@@ -11,22 +11,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfileAndPermissions = useCallback(async (userId: string) => {
-    const [{ data: profileData, error: profileError }, { data: permData, error: permError }] =
-      await Promise.all([
-        supabase
-          .from("profiles")
-          .select("id, display_name, role_id, roles(name)")
-          .eq("id", userId)
-          .single(),
-        supabase.rpc("current_user_permissions"),
-      ]);
+    const [
+      { data: profileData, error: profileError },
+      { data: permData, error: permError },
+    ] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id, display_name, role_id, roles(name)")
+        .eq("id", userId)
+        .single(),
+      supabase.rpc("current_user_permissions"),
+    ]);
 
     if (profileError) {
       console.error("Failed to load profile:", profileError.message);
       setProfile(null);
     } else if (profileData) {
-      const rolesField = (profileData as { roles: { name: string } | { name: string }[] | null })
-        .roles;
+      const rolesField = (
+        profileData as { roles: { name: string } | { name: string }[] | null }
+      ).roles;
       const roleName = Array.isArray(rolesField)
         ? rolesField[0]?.name
         : rolesField?.name;
@@ -43,7 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Failed to load permissions:", permError.message);
       setPermissions([]);
     } else {
-      setPermissions((permData ?? []).map((row: { current_user_permissions: string }) => row.current_user_permissions));
+      setPermissions((permData as string[] | null) ?? []);
+      // setPermissions((permData ?? []).map((row: { current_user_permissions: string }) => row.current_user_permissions));
     }
   }, []);
 
@@ -57,7 +61,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        loadProfileAndPermissions(session.user.id).finally(() => setLoading(false));
+        loadProfileAndPermissions(session.user.id).finally(() =>
+          setLoading(false),
+        );
       } else {
         setLoading(false);
       }

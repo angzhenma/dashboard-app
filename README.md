@@ -30,4 +30,5 @@ Swapping in a real backend later should mostly mean rewriting `mockData.ts` to c
 
 ## Known Limitations / Next Steps
 
-- TBD
+- Layout persistence exists but card expansion settings does not.
+- Uniformalization of UI components and buttons.
