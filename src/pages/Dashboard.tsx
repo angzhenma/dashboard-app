@@ -1,8 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useDashboardData } from "../hooks/useDashboardData";
 import { useBoardLayout } from "../hooks/useBoardLayout";
 import { useAuth } from "../context/useAuth";
-import { canEditBoard, canViewUsers, canManageRoles } from "../utils/permissions";
+import {
+  canEditBoard,
+  canViewUsers,
+  canManageRoles,
+} from "../utils/permissions";
 import AdminPanel from "./AdminPanel";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
@@ -28,24 +32,87 @@ import {
   fetchVulnerableAppsData,
   fetchDevicesByOSData,
 } from "../api/dashboardApi";
-import type { DashboardCardItem, VulnerableAppsData, DevicesByOS } from "../types";
+import type {
+  DashboardCardItem,
+  VulnerableAppsData,
+  DevicesByOS,
+} from "../types";
 
 export default function Dashboard() {
   const { session, profile, permissions, signOut } = useAuth();
   const canEdit = canEditBoard(permissions);
-  const canAccessAdmin = canViewUsers(permissions) || canManageRoles(permissions);
+  const canAccessAdmin =
+    canViewUsers(permissions) || canManageRoles(permissions);
   const [view, setView] = useState<"board" | "admin">("board");
   const { columns, setColumns, isLoadingLayout } = useBoardLayout(
     session?.user.id,
   );
 
   useEffect(() => {
-    document.title = "Security Operations Center Dashboard";
+    document.title = "SOC Dashboard";
   }, []);
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [resizableCards, setResizableCards] = useState<Record<string, boolean>>(
     {},
+  );
+
+  const resizableCardsRef = useRef(resizableCards);
+  useEffect(() => {
+    resizableCardsRef.current = resizableCards;
+  }, [resizableCards]);
+
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const resizeCommitTimeoutsRef = useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
+
+  const commitCardWidth = useCallback(
+    (cardId: string, width: number) => {
+      setColumns((prev) => {
+        const next: typeof prev = { ...prev };
+        for (const colId of Object.keys(next)) {
+          const idx = next[colId].findIndex((c) => c.id === cardId);
+          if (idx !== -1) {
+            const updatedCol = [...next[colId]];
+            updatedCol[idx] = { ...updatedCol[idx], width };
+            next[colId] = updatedCol;
+            break;
+          }
+        }
+        return next;
+      });
+    },
+    [setColumns],
+  );
+
+  useEffect(() => {
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const target = entry.target as HTMLElement;
+        const cardId = target.dataset.cardId;
+        if (!cardId || !resizableCardsRef.current[cardId]) continue;
+
+        const width =
+          entry.borderBoxSize?.[0]?.inlineSize ?? entry.contentRect.width;
+
+        clearTimeout(resizeCommitTimeoutsRef.current[cardId]);
+        resizeCommitTimeoutsRef.current[cardId] = setTimeout(() => {
+          commitCardWidth(cardId, Math.round(width));
+        }, 400);
+      }
+    });
+
+    return () => resizeObserverRef.current?.disconnect();
+  }, [commitCardWidth]);
+
+  const registerCardNode = useCallback(
+    (cardId: string, node: HTMLElement | null) => {
+      if (!node || !resizeObserverRef.current) return;
+      node.dataset.cardId = cardId;
+      resizeObserverRef.current.observe(node, { box: "border-box" });
+    },
+    [],
   );
 
   const [vulnerableApps, setVulnerableApps] = useState<VulnerableAppsData[]>(
@@ -422,45 +489,49 @@ export default function Dashboard() {
           Loading your dashboard layout...
         </p>
       ) : (
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div
-          className="
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div
+            className="
             flex
             gap-6
             items-start
             overflow-x-auto
             pb-10
           "
-        >
-          {Object.keys(columns).map((colId) => (
-            <Droppable key={colId} droppableId={colId} direction="vertical">
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className={`${kanbanColumnClass}`}
-                >
-                  {columns[colId].map((card, index) => (
-                    <Draggable
-                      key={card.id}
-                      draggableId={card.id}
-                      index={index}
-                    >
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`${cardStyleClass}`}
-                          style={{
-                            ...provided.draggableProps.style,
-                            resize: resizableCards[card.id]
-                              ? "horizontal"
-                              : "none",
-                            overflow: "hidden",
-                          }}
-                        >
+          >
+            {Object.keys(columns).map((colId) => (
+              <Droppable key={colId} droppableId={colId} direction="vertical">
+                {(provided) => (
+                  <div
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    className={`${kanbanColumnClass}`}
+                  >
+                    {columns[colId].map((card, index) => (
+                      <Draggable
+                        key={card.id}
+                        draggableId={card.id}
+                        index={index}
+                      >
+                        {(provided) => (
                           <div
-                            className="
+                            ref={(node) => {
+                              provided.innerRef(node);
+                              registerCardNode(card.id, node);
+                            }}
+                            {...provided.draggableProps}
+                            className={`${cardStyleClass}`}
+                            style={{
+                              ...provided.draggableProps.style,
+                              resize: resizableCards[card.id]
+                                ? "horizontal"
+                                : "none",
+                              overflow: "hidden",
+                              width: card.width ? `${card.width}px` : undefined,
+                            }}
+                          >
+                            <div
+                              className="
                               flex
                               justify-between
                               items-center
@@ -469,46 +540,46 @@ export default function Dashboard() {
                               border-[var(--soc-border)]
                               pb-2
                             "
-                          >
-                            <div
-                              className="
+                            >
+                              <div
+                                className="
                                 flex
                                 items-center
                                 gap-2.5
                               "
-                            >
-                              <div
-                                {...(canEdit ? provided.dragHandleProps : {})}
-                                className={`
+                              >
+                                <div
+                                  {...(canEdit ? provided.dragHandleProps : {})}
+                                  className={`
                                   flex
                                   items-center
                                   justify-center
                                   ${canEdit ? "cursor-grab" : "cursor-default"}
                                 `}
-                              >
-                                <Move size={16} color="#475569" />
-                              </div>
-                              <h4
-                                className="
+                                >
+                                  <Move size={16} color="#475569" />
+                                </div>
+                                <h4
+                                  className="
                                   m-0
                                   text-[var(--soc-text)]
                                   text-[15px]
                                   font-semibold
                                 "
-                              >
-                                {card.title}
-                              </h4>
-                            </div>
-                            <div
-                              className="
+                                >
+                                  {card.title}
+                                </h4>
+                              </div>
+                              <div
+                                className="
                                 flex
                                 items-center
                                 gap-2
                               "
-                            >
-                              <button
-                                onClick={() => toggleResize(card.id)}
-                                className={`
+                              >
+                                <button
+                                  onClick={() => toggleResize(card.id)}
+                                  className={`
                                   border-none
                                   flex
                                   items-center
@@ -523,18 +594,18 @@ export default function Dashboard() {
                                       : "bg-transparent text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
                                   }
                                 `}
-                                title={
-                                  resizableCards[card.id]
-                                    ? "Lock Width"
-                                    : "Enable Resizing"
-                                }
-                              >
-                                <Maximize2 size={16} />
-                              </button>
-                              {canEdit && (
-                                <button
-                                  onClick={() => removeCard(colId, card.id)}
-                                  className="
+                                  title={
+                                    resizableCards[card.id]
+                                      ? "Lock Width"
+                                      : "Enable Resizing"
+                                  }
+                                >
+                                  <Maximize2 size={16} />
+                                </button>
+                                {canEdit && (
+                                  <button
+                                    onClick={() => removeCard(colId, card.id)}
+                                    className="
                                     bg-none
                                     border-none
                                     cursor-pointer
@@ -542,24 +613,24 @@ export default function Dashboard() {
                                     text-[var(--soc-gray)]
                                     p-[6px]
                                   "
-                                >
-                                  <X size={16} />
-                                </button>
-                              )}
+                                  >
+                                    <X size={16} />
+                                  </button>
+                                )}
+                              </div>
                             </div>
+                            <div>{renderCardContent(card.type)}</div>
                           </div>
-                          <div>{renderCardContent(card.type)}</div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          ))}
-        </div>
-      </DragDropContext>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            ))}
+          </div>
+        </DragDropContext>
       )}
 
       {canEdit && (

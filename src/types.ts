@@ -84,6 +84,7 @@ export interface DashboardCardItem {
   id: string;
   type: string;
   title: string;
+  width?: number;
 }
 
 export type DashboardColumns = Record<string, DashboardCardItem[]>;
