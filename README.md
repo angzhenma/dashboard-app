@@ -22,7 +22,7 @@ A prototype Security Operations Center (SOC) dashboard built with **Vite + React
 - **Resizable cards:** individual cards can be toggled into a resizable state and expanded horizontally.
 - **Responsive metric grid:** the cards use a CSS Grid with `auto-fit`/`minmax(280px, 1fr)`, so its internal columns respond to the card's width when resized.
 - **Profile editing:** users are able to customize their own display name and change their password in-app.
-- **User tole assigning and creation:** this admin-only feature allows admin users to change any user's role and create new roles with custom persmissions.
+- **User role assigning and creation:** this admin-only feature allows admin users to change any user's role and create new roles with custom persmissions.
 
 ## Known Limitations / Next Steps
 
