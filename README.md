@@ -30,5 +30,4 @@ Swapping in a real backend later should mostly mean rewriting `mockData.ts` to c
 
 ## Known Limitations / Next Steps
 
-- Layout and width doesn't persist upon logging back in.
-- Uniformalization of UI components and buttons design.
+- TBD
