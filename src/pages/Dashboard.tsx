@@ -433,13 +433,9 @@ export default function Dashboard() {
             items-center
             gap-3
             bg-transparent
-            border
-            border-[var(--soc-border)]
-            rounded-lg
             px-4
             py-2
             cursor-pointer
-            hover:border-[var(--soc-light-blue)]
           "
         >
           <div className="text-right">

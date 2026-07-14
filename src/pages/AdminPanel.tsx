@@ -184,18 +184,15 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
       <header className="flex items-ceneter gap-4 pb-6 mb-8 border-b border-[var(--soc-border)]">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 bg-transparent border border-[var(--soc-border)]
-                    rounded-lg px-3.5 py-2 text-[var(--soc-subtext)] text-[13px] cursor-pointer gover:text-[var(--soc-text)]
-                "
+          className="flex items-center py-2 text-[var(--soc-text)] cursor-pointer"
         >
-          <ArrowLeft size={14} />
-          Back to Dashboard
+          <ArrowLeft size={24} />
         </button>
         <div>
           <h1 className="m-0 text-[var(--soc-text)] font-bold text-2xl">
             Administration
           </h1>
-          <p className="m-0 text[var(--soc-subtext)] text-sm">
+          <p className="m-0 text-[var(--soc-subtext)] text-sm">
             Manage registered users and role permissions
           </p>
         </div>
@@ -222,7 +219,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
               </div>
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="text-left text-[var(--soc-subtext)] text-xs uppercase tracking-wider">
+                  <tr className="text-left text-[var(--soc-text)] text-xs uppercase tracking-wider">
                     <th className="pb-2 pr-4">Name</th>
                     <th className="pb-2 pr-4">Email</th>
                     <th className="pb-2 pr-4">Role</th>
@@ -235,7 +232,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                       key={u.id}
                       className="border-t border[var(--soc-border)]"
                     >
-                      <td className="py-2.5 pr-4 text-[var(--soc-text)]">
+                      <td className="py-2.5 pr-4 text-[var(--soc-subtext)]">
                         {u.display_name}
                       </td>
                       <td className="py-2.5 pr-4 text-[var(--soc-subtext)]">
@@ -248,7 +245,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                             onChange={(e) =>
                               handleRoleChange(u.id, e.target.value)
                             }
-                            className="bg-[var(--soc-bg)] border border-[var(--soc-border)] rounded-md px-2 py-1 text-[var(--soc-text)] text-sm"
+                            className="bg-[var(--soc-bg)] rounded-md py-1 text-[var(--soc-text)] text-sm"
                           >
                             {roles.map((r) => (
                               <option key={r.id} value={r.id}>

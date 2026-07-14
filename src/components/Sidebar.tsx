@@ -72,7 +72,7 @@ export default function Sidebar({
         <nav className="flex flex-col gap-1 border-t border-[var(--soc-border)] pt-3">
           <button onClick={onEditProfile} className={menuItemClass}>
             <User size={16} className="text-[var(--soc-light-blue)]" />
-            Edit Profile / Manage Account
+            Edit Profile
           </button>
 
           {canAccessAdmin && (

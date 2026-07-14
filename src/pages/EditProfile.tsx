@@ -32,6 +32,7 @@ export default function EditProfile({ onBack }: { onBack: () => void }) {
         .eq("id", session.user.id);
       if (error) throw error;
       await refreshProfile();
+      setNameMessage("Display name updated successfully.")
     } catch (err) {
       setNameError(
         err instanceof Error ? err.message : "Failed to update display name.",
@@ -77,11 +78,9 @@ export default function EditProfile({ onBack }: { onBack: () => void }) {
       <header className="flex items-center gap-4 pb-6 mb-8 border-b border-[var(--soc-border)]">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 bg-transparent border border-[var(--soc-border)] rounded-lg px-3.5 py-2
-          text-[var(--soc-subtext)] text-[13px] cursor-pointer hover:text-[var(--soc-text)]"
+          className="flex items-center py-2 text-[var(--soc-text)] cursor-pointer"
         >
-          <ArrowLeft size={14} />
-          Back to Dashboard
+          <ArrowLeft size={24} />
         </button>
         <div>
           <h1 className="m-0 text-[var(--soc-text)] font-bold text-2xl">
@@ -123,7 +122,7 @@ export default function EditProfile({ onBack }: { onBack: () => void }) {
           <button
             onClick={handleSaveName}
             disabled={isSavingName || !displayName.trim()}
-            className="mt-3 bg-[var(--soc-blu)] text-[var(--soc-bg)] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
+            className="mt-3 bg-[var(--soc-blue)] text-[var(--soc-bg)] rounded-lg px-4 py-2 text-sm font-medium disabled:opacity-50"
           >
             {isSavingName ? "Saving..." : "Save Name"}
           </button>
