@@ -48,7 +48,7 @@ export function useBoardLayout(userId: string | undefined) {
     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = setTimeout(() => {
       supabase
-        .from("board_layout")
+        .from("board_layouts")
         .upsert({
           user_id: userId,
           columns,
