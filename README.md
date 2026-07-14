@@ -30,4 +30,5 @@ Swapping in a real backend later should mostly mean rewriting `mockData.ts` to c
 
 ## Known Limitations / Next Steps
 
-- TBD
+- Add Super Admin role
+- Add option for users to sign up (should be held for review)
