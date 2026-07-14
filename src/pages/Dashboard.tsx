@@ -8,6 +8,8 @@ import {
   canManageRoles,
 } from "../utils/permissions";
 import AdminPanel from "./AdminPanel";
+import EditProfile from "./EditProfile";
+import Sidebar from "../components/Sidebar";
 import MetricsCard from "../components/MetricsCard";
 import ThreatTypePieChart from "../components/ThreatTypePieChart";
 import UnresolvedThreatsPieChart from "../components/UnresolvedThreatsPieChart";
@@ -18,16 +20,7 @@ import {
   Draggable,
   type DropResult,
 } from "@hello-pangea/dnd";
-import {
-  Plus,
-  X,
-  Move,
-  Terminal,
-  Maximize2,
-  ShieldCheck,
-  LogOut,
-  Users,
-} from "lucide-react";
+import { Plus, X, Move, Terminal, Maximize2, ShieldCheck } from "lucide-react";
 import {
   fetchVulnerableAppsData,
   fetchDevicesByOSData,
@@ -43,7 +36,8 @@ export default function Dashboard() {
   const canEdit = canEditBoard(permissions);
   const canAccessAdmin =
     canViewUsers(permissions) || canManageRoles(permissions);
-  const [view, setView] = useState<"board" | "admin">("board");
+  const [view, setView] = useState<"board" | "admin" | "profile">("board");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { columns, setColumns, isLoadingLayout } = useBoardLayout(
     session?.user.id,
   );
@@ -381,6 +375,10 @@ export default function Dashboard() {
     return <AdminPanel onBack={() => setView("board")} />;
   }
 
+  if (view === "profile") {
+    return <EditProfile onBack={() => setView("board")} />;
+  }
+
   return (
     <div
       className="
@@ -428,7 +426,22 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="
+            flex
+            items-center
+            gap-3
+            bg-transparent
+            border
+            border-[var(--soc-border)]
+            rounded-lg
+            px-4
+            py-2
+            cursor-pointer
+            hover:border-[var(--soc-light-blue)]
+          "
+        >
           <div className="text-right">
             <p className="m-0 text-sm font-semibold text-[var(--soc-text)]">
               {profile?.display_name ?? session?.user.email}
@@ -437,52 +450,28 @@ export default function Dashboard() {
               {profile?.role_name}
             </p>
           </div>
-          {canAccessAdmin && (
-            <button
-              onClick={() => setView("admin")}
-              className="
-                flex
-                items-center
-                gap-1.5
-                bg-transparent
-                border
-                border-[var(--soc-border)]
-                rounded-lg
-                px-3.5
-                py-2
-                text-[var(--soc-subtext)]
-                text-[13px]
-                cursor-pointer
-                hover:text-[var(--soc-text)]
-              "
-            >
-              <Users size={14} />
-              Manage Users
-            </button>
-          )}
-          <button
-            onClick={signOut}
-            className="
-              flex
-              items-center
-              gap-1.5
-              bg-transparent
-              border
-              border-[var(--soc-border)]
-              rounded-lg
-              px-3.5
-              py-2
-              text-[var(--soc-subtext)]
-              text-[13px]
-              cursor-pointer
-              hover:text-[var(--soc-text)]
-            "
-          >
-            <LogOut size={14} />
-            Log Out
-          </button>
-        </div>
+        </button>
       </header>
+
+      <Sidebar
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        displayName={profile?.display_name ?? session?.user.email ?? ""}
+        roleName={profile?.role_name ?? ""}
+        canAccessAdmin={canAccessAdmin}
+        onEditProfile={() => {
+          setIsSidebarOpen(false);
+          setView("profile");
+        }}
+        onManageUsers={() => {
+          setIsSidebarOpen(false);
+          setView("admin");
+        }}
+        onLogOut={() => {
+          setIsSidebarOpen(false);
+          signOut();
+        }}
+      />
 
       {isLoadingLayout ? (
         <p className="text-[var(--soc-subtext)] text-sm">
