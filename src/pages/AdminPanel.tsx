@@ -18,7 +18,7 @@ import {
 import { ArrowLeft, Plus, Shield, UsersIcon } from "lucide-react";
 
 const cardClass =
-  "bg-[var(--soc-card)] border border-[var(--soc-border)] rpunded-xl p-5";
+  "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-xl p-5";
 
 export default function AdminPanel({ onBack }: { onBack: () => void }) {
   const { permissions, refreshProfile } = useAuth();
@@ -181,7 +181,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="bg-[var(--soc-background)] my-0 mx-auto min-h-screen p-10">
-      <header className="flex items-ceneter gap-4 pb-6 mb-8 border-b border-[var(--soc-border)]">
+      <header className="flex items-center gap-4 pb-6 mb-8 border-b border-[var(--soc-border)]">
         <button
           onClick={onBack}
           className="flex items-center py-2 text-[var(--soc-text)] cursor-pointer"
@@ -230,7 +230,7 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                   {users.map((u) => (
                     <tr
                       key={u.id}
-                      className="border-t border[var(--soc-border)]"
+                      className="border-t border-[var(--soc-border)]"
                     >
                       <td className="py-2.5 pr-4 text-[var(--soc-subtext)]">
                         {u.display_name}
