@@ -11,6 +11,8 @@ cross join public.permissions p
 where r.name = 'Super Admin';
 
 -- ROLE HIERARCHY HELPER
+-- min promotion in §8 possible
+
 create or replace function public.current_user_is_super_admin()
 returns boolean
 language sql
@@ -34,7 +36,7 @@ create table public.registration_requests (
     reviewed_by uuid references auth.users (id)
 );
 
-alter table public.registration_requestss enable row level security;
+alter table public.registration_requests enable row level security;
 
 -- a user can check their own request status
 create policy "users can view their own registration request"
@@ -61,7 +63,7 @@ begin
     values (
         new.id,
         new.email,
-        coalesce(new.raw_user_meta_data ->> 'display_name', split_part(new.email, @, 1)),
+        coalesce(new.raw_user_meta_data ->> 'display_name', split_part(new.email, '@', 1)),
         'pending'
     );
     return new;
@@ -171,12 +173,7 @@ begin
 end;
 $$;
 
--- ---------------------------------------------------------------------
--- 7. list_users() also needs to expose whether each user's role is the
---    super-admin tier, so the frontend can gate each row correctly
--- ---------------------------------------------------------------------
--- CREATE OR REPLACE can't change a function's return columns, so the old
--- signature (without role_is_super_admin) has to go first.
+-- list_users() CHANGE
 drop function if exists public.list_users();
 
 create or replace function public.list_users()
