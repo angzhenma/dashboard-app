@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "../lib/supabaseClient";
-import type { Profile } from "../types";
-import { AuthContext } from "./authContextObject";
+import { supabase } from "../lib/supabaseClient.ts";
+import type { Profile } from "../types.ts";
+import { AuthContext } from "./authContextObject.ts";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -17,9 +17,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ] = await Promise.all([
       supabase
         .from("profiles")
-        .select("id, display_name, role_id, roles(name)")
+        .select("id, display_name, role_id, roles(name, is_super_admin)")
         .eq("id", userId)
-        .single(),
+        .maybeSingle(),
       supabase.rpc("current_user_permissions"),
     ]);
 
@@ -28,18 +28,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null);
     } else if (profileData) {
       const rolesField = (
-        profileData as { roles: { name: string } | { name: string }[] | null }
+        profileData as {
+          roles:
+            | { name: string; is_super_admin: boolean }
+            | { name: string; is_super_admin: boolean }[]
+            | null;
+        }
       ).roles;
-      const roleName = Array.isArray(rolesField)
-        ? rolesField[0]?.name
-        : rolesField?.name;
+      const roleInfo = Array.isArray(rolesField) ? rolesField[0] : rolesField;
 
       setProfile({
         id: profileData.id,
         display_name: profileData.display_name,
         role_id: profileData.role_id,
-        role_name: roleName ?? "Unknown",
+        role_name: roleInfo?.name ?? "Unknown",
+        is_super_admin: roleInfo?.is_super_admin ?? false,
       });
+    } else {
+      setProfile(null);
     }
 
     if (permError) {
@@ -47,7 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPermissions([]);
     } else {
       setPermissions((permData as string[] | null) ?? []);
-      // setPermissions((permData ?? []).map((row: { current_user_permissions: string }) => row.current_user_permissions));
     }
   }, []);
 

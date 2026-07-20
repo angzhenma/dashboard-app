@@ -56,6 +56,7 @@ export interface Profile {
   display_name: string;
   role_id: string;
   role_name: string;
+  is_super_admin: boolean;
 }
 
 export interface Role {
@@ -63,6 +64,7 @@ export interface Role {
   name: string;
   description: string | null;
   is_system: boolean;
+  is_super_admin: boolean;
   created_at: string;
 }
 
@@ -77,6 +79,7 @@ export interface RegisteredUser {
   display_name: string;
   role_id: string;
   role_name: string;
+  role_is_super_admin: boolean;
   created_at: string;
 }
 

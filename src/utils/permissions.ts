@@ -27,3 +27,7 @@ export function canManageUsers(permissions: string[] | null | undefined): boolea
 export function canManageRoles(permissions: string[] | null | undefined): boolean {
     return hasPermission(permissions, "roles.manage");
 }
+
+export function isSuperAdmin(profile: { is_super_admin: boolean } | null | undefined): boolean {
+    return profile?.is_super_admin === true;
+}

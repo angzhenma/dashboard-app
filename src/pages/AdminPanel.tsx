@@ -1,11 +1,12 @@
+// deno-lint-ignore-file jsx-button-has-type
 import { /*useCallback,*/ useEffect, useState } from "react";
-import { useAuth } from "../context/useAuth";
-import type { Permission, Role, RegisteredUser } from "../types";
+import { useAuth } from "../context/useAuth.ts";
+import type { Permission, Role, RegisteredUser } from "../types.ts";
 import {
   canManageRoles,
   canManageUsers,
   canViewUsers,
-} from "../utils/permissions";
+} from "../utils/permissions.ts";
 import {
   assignUserRole,
   fetchPermissions,
@@ -14,7 +15,7 @@ import {
   fetchRoles,
   fetchUsers,
   updateRolePermissions,
-} from "../api/adminApi";
+} from "../api/adminApi.ts";
 import { ArrowLeft, Plus, Shield, UsersIcon } from "lucide-react";
 
 const cardClass =

@@ -1,5 +1,5 @@
-import { supabase } from "../lib/supabaseClient";
-import type { RegisteredUser, Role, Permission } from "../types";
+import { supabase } from "../lib/supabaseClient.ts";
+import type { RegisteredUser, Role, Permission } from "../types.ts";
 
 export async function fetchUsers(): Promise<RegisteredUser[]> {
     const {data, error } = await supabase.rpc("list_users");
@@ -68,4 +68,17 @@ export async function assignUserRole(
     new_role_id: roleId,
   });
   if (error) throw error;
+}
+
+export async function createUser(
+  email: string,
+  password: string,
+  displayName: string,
+  roleId: string,
+): Promise<{ id: string }> {
+  const { data, error } = await supabase.functions.invoke("create-user", { body: { email, password, displayName, roleId },
+  });
+  if (error) throw error;
+  if (data?.error) throw new Error(data.error);
+  return data as { id: string };
 }
