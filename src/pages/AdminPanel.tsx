@@ -6,6 +6,7 @@ import {
   canManageRoles,
   canManageUsers,
   canViewUsers,
+  isSuperAdmin,
 } from "../utils/permissions.ts";
 import {
   assignUserRole,
@@ -15,14 +16,23 @@ import {
   fetchRoles,
   fetchUsers,
   updateRolePermissions,
+  createUser,
 } from "../api/adminApi.ts";
-import { ArrowLeft, Plus, Shield, UsersIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Plus,
+  Shield,
+  UserPlus,
+  UsersIcon,
+} from "lucide-react";
 
 const cardClass =
   "bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-xl p-5";
 
 export default function AdminPanel({ onBack }: { onBack: () => void }) {
-  const { permissions, refreshProfile } = useAuth();
+  const { session, profile, permissions, refreshProfile } = useAuth();
+  const actingIsSuperAdmin = isSuperAdmin(profile);
   const [users, setUsers] = useState<RegisteredUser[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [allPermissions, setAllPermissions] = useState<Permission[]>([]);
@@ -36,84 +46,63 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
   const [newRoleName, setNewRoleName] = useState("");
   const [newRoleKeys, setNewRoleKeys] = useState<Set<string>>(new Set());
 
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserDisplayName, setNewUserDisplayName] = useState("");
+  const [newUserRoleId, setNewUserRoleId] = useState("");
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+
+  const [pendingSuperAdminPromotion, setPendingSuperAdminPromotion] = useState<{
+    userId: string;
+    userName: string;
+    roleId: string;
+  } | null>(null);
+  const [pendingSuperAdminCreation, setPendingSuperAdminCreation] = useState<{
+    email: string;
+    password: string;
+    displayName: string;
+    roleId: string;
+  } | null>(null);
+
   const canSeeUsers = canViewUsers(permissions);
   const canEditUsers = canManageUsers(permissions);
   const canEditRoles = canManageRoles(permissions);
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadAllData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [rolesRes, permsRes] = await Promise.all([
+        fetchRoles(),
+        fetchPermissions(),
+      ]);
 
-    async function startDataMigration() {
-      setLoading(true);
-      setError(null);
-      try {
-        const [rolesRes, permsRes] = await Promise.all([
-          fetchRoles(),
-          fetchPermissions(),
-        ]);
+      setRoles(rolesRes);
+      setAllPermissions(permsRes);
 
-        if (!isMounted) return;
-
-        setRoles(rolesRes);
-        setAllPermissions(permsRes);
-
-        if (canSeeUsers) {
-          const usersRes = await fetchUsers();
-          if (isMounted) {
-            setUsers(usersRes);
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(
-            err instanceof Error ? err.message : "Failed to load admin data.",
-          );
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      if (canSeeUsers) {
+        setUsers(await fetchUsers());
       }
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to load admin data.",
+      );
+    } finally {
+      setLoading(false);
     }
+  };
 
-    startDataMigration();
-
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadAllData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canSeeUsers]);
 
-  //   const loadAll = useCallback(async () => {
-  //     setLoading(true);
-  //     setError(null);
-  //     try {
-  //       const [rolesRes, permsRes] = await Promise.all([
-  //         fetchRoles(),
-  //         fetchPermissions(),
-  //       ]);
-
-  //       setRoles(rolesRes);
-  //       setAllPermissions(permsRes);
-
-  //       if (canSeeUsers) {
-  //         setUsers(await fetchUsers());
-  //       }
-  //     } catch (err) {
-  //       setError(
-  //         err instanceof Error ? err.message : "Failed to load admin data.",
-  //       );
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }, [canSeeUsers]);
-
-  //   useEffect(() => {
-  //     loadAll();
-  //   }, [loadAll]);
-
-  const handleRoleChange = async (userId: string, roleId: string) => {
+  const applyRoleChange = async (userId: string, roleId: string) => {
     try {
       await assignUserRole(userId, roleId);
+
       setUsers((prev) =>
         prev.map((u) =>
           u.id === userId
@@ -122,6 +111,8 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                 role_id: roleId,
                 role_name:
                   roles.find((r) => r.id === roleId)?.name ?? u.role_name,
+                role_is_super_admin:
+                  roles.find((r) => r.id === roleId)?.is_super_admin ?? false,
               }
             : u,
         ),
@@ -130,6 +121,87 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to assign role.");
     }
+  };
+
+  const handleRoleChange = (
+    userId: string,
+    userName: string,
+    roleId: string,
+  ) => {
+    const targetRole = roles.find((r) => r.id === roleId);
+    if (targetRole?.is_super_admin) {
+      setPendingSuperAdminPromotion({ userId, userName, roleId });
+      return;
+    }
+    applyRoleChange(userId, roleId);
+  };
+
+  const canChangeUserRole = (target: RegisteredUser): boolean => {
+    if (!canEditUsers) return false;
+    if (!target.role_is_super_admin) return true;
+    if (!actingIsSuperAdmin) return false;
+    return target.id === session?.user.id;
+  };
+
+  const resetCreateUserForm = () => {
+    setNewUserEmail("");
+    setNewUserPassword("");
+    setNewUserDisplayName("");
+    setNewUserRoleId("");
+  };
+
+  const applyCreateUser = async (
+    email: string,
+    password: string,
+    displayName: string,
+    roleId: string,
+  ) => {
+    setIsSubmittingUser(true);
+    setError(null);
+    try {
+      await createUser(email, password, displayName, roleId);
+      resetCreateUserForm();
+      setIsCreatingUser(false);
+      await loadAllData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to create user.");
+    } finally {
+      setIsSubmittingUser(false);
+    }
+  };
+
+  const handleCreateUser = () => {
+    if (
+      !newUserEmail ||
+      !newUserPassword ||
+      !newUserDisplayName ||
+      !newUserRoleId
+    ) {
+      setError("All fields are required to create a user.");
+      return;
+    }
+    if (newUserPassword.length < 8) {
+      setError("Password must be at least 8 characters.");
+      return;
+    }
+
+    const targetRole = roles.find((r) => r.id === newUserRoleId);
+    if (targetRole?.is_super_admin) {
+      setPendingSuperAdminCreation({
+        email: newUserEmail,
+        password: newUserPassword,
+        displayName: newUserDisplayName,
+        roleId: newUserRoleId,
+      });
+      return;
+    }
+
+    applyCreateUser(
+      newUserEmail,
+      newUserPassword,
+      newUserDisplayName,
+      newUserRoleId,
+    );
   };
 
   const startEditingRole = async (role: Role) => {
@@ -212,12 +284,78 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
           {/* Registered Users */}
           {canSeeUsers && (
             <section className={cardClass}>
-              <div className="flex items-center gap-2 mb-4">
-                <UsersIcon size={18} className="text-[var(--soc-light-blue)]" />
-                <h2 className="m-0 text-[var(--soc-text)] font-semibold text-lg">
-                  Registered Users
-                </h2>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <UsersIcon
+                    size={18}
+                    className="text-[var(--soc-light-blue)]"
+                  />
+                  <h2 className="m-0 text-[var(--soc-text)] font-semibold text-lg">
+                    Registered Users
+                  </h2>
+                </div>
+                {actingIsSuperAdmin && (
+                  <button
+                    onClick={() => setIsCreatingUser((v) => !v)}
+                    className="flex items-center gap-1.5 bg-[var(--soc-blue)] text-[#090d16] rounded-lg px-3 py-1.5 text-sm font-medium"
+                  >
+                    <UserPlus size={14} />
+                    Create User
+                  </button>
+                )}
               </div>
+
+              {isCreatingUser && (
+                <div className="mb-5 p-4 border border-[var(--soc-border)] rounded-lg bg-[var(--soc-bg)] flex flex-col gap-3">
+                  <input
+                    type="text"
+                    value={newUserDisplayName}
+                    onChange={(e) => setNewUserDisplayName(e.target.value)}
+                    placeholder="Display name"
+                    className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-md px-3 py-2 text-[var(--soc-text)] text-sm"
+                  />
+                  <input
+                    type="email"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    placeholder="Email"
+                    className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-md px-3 py-2 text-[var(--soc-text)] text-sm"
+                  />
+                  <input
+                    type="password"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    placeholder="Initial password (min. 8 characters)"
+                    className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-md px-3 py-2 text-[var(--soc-text)] text-sm"
+                  />
+                  <select
+                    value={newUserRoleId}
+                    onChange={(e) => setNewUserRoleId(e.target.value)}
+                    className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-md px-3 py-2 text-[var(--soc-text)] text-sm"
+                  >
+                    <option value="" disabled>
+                      Assign role...
+                    </option>
+                    {roles.map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {r.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-[var(--soc-subtext)] m-0">
+                    The new user can change their display name and password
+                    themselves after logging in.
+                  </p>
+                  <button
+                    onClick={handleCreateUser}
+                    disabled={isSubmittingUser}
+                    className="bg-[var(--soc-green)] text-[#090d16] rounded-lg px-4 py-1.5 text-sm font-medium disabled:opacity-50 self-start"
+                  >
+                    {isSubmittingUser ? "Creating..." : "Create User"}
+                  </button>
+                </div>
+              )}
+
               <table className="w-full text-sm border-collapse">
                 <thead>
                   <tr className="text-left text-[var(--soc-text)] text-xs uppercase tracking-wider">
@@ -235,16 +373,25 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
                     >
                       <td className="py-2.5 pr-4 text-[var(--soc-subtext)]">
                         {u.display_name}
+                        {u.role_is_super_admin && (
+                          <span className="ml-2 text-[10px] uppercase tracking-wider text-[var(--soc-yellow)] border border-[var(--soc-yellow)] rounded px-1.5 py-0.5">
+                            Super Admin
+                          </span>
+                        )}
                       </td>
                       <td className="py-2.5 pr-4 text-[var(--soc-subtext)]">
                         {u.email}
                       </td>
                       <td className="py-2.5 pr-4">
-                        {canEditUsers ? (
+                        {canChangeUserRole(u) ? (
                           <select
                             value={u.role_id}
                             onChange={(e) =>
-                              handleRoleChange(u.id, e.target.value)
+                              handleRoleChange(
+                                u.id,
+                                u.display_name,
+                                e.target.value,
+                              )
                             }
                             className="bg-[var(--soc-bg)] rounded-md py-1 text-[var(--soc-text)] text-sm"
                           >
@@ -392,6 +539,92 @@ export default function AdminPanel({ onBack }: { onBack: () => void }) {
               ))}
             </div>
           </section>
+        </div>
+      )}
+
+      {pendingSuperAdminPromotion && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(5,8,15,0.85)]">
+          <div className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-lg p-7 w-full max-w-[480px]">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle size={20} className="text-[var(--soc-yellow)]" />
+              <h3 className="m-0 text-[var(--soc-text)] font-semibold text-lg">
+                Confirm Super Admin Promotion
+              </h3>
+            </div>
+            <p className="text-sm text-[var(--soc-subtext)]">
+              This will make{" "}
+              <span className="text-[var(--soc-text)] font-medium">
+                {pendingSuperAdminPromotion.userName}
+              </span>{" "}
+              a Super Admin. Once applied, this change can only be reversed by{" "}
+              {pendingSuperAdminPromotion.userName} themselves — no other admin
+              or super admin will be able to change their role.
+            </p>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => {
+                  applyRoleChange(
+                    pendingSuperAdminPromotion.userId,
+                    pendingSuperAdminPromotion.roleId,
+                  );
+                  setPendingSuperAdminPromotion(null);
+                }}
+                className="bg-[var(--soc-yellow)] text-[#090d16] rounded-lg px-4 py-2 text-sm font-medium"
+              >
+                Confirm Promotion
+              </button>
+              <button
+                onClick={() => setPendingSuperAdminPromotion(null)}
+                className="bg-transparent border border-[var(--soc-border)] text-[var(--soc-subtext)] rounded-lg px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pendingSuperAdminCreation && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-[rgba(5,8,15,0.85)]">
+          <div className="bg-[var(--soc-card)] border border-[var(--soc-border)] rounded-lg p-7 w-full max-w-[480px]">
+            <div className="flex items-center gap-2 mb-4">
+              <AlertTriangle size={20} className="text-[var(--soc-yellow)]" />
+              <h3 className="m-0 text-[var(--soc-text)] font-semibold text-lg">
+                Confirm Super Admin Creation
+              </h3>
+            </div>
+            <p className="text-sm text-[var(--soc-subtext)]">
+              This will create{" "}
+              <span className="text-[var(--soc-text)] font-medium">
+                {pendingSuperAdminCreation.displayName}
+              </span>{" "}
+              directly as a Super Admin. Once created, only they will be able to
+              change their own role — no other admin or super admin will be able
+              to.
+            </p>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => {
+                  applyCreateUser(
+                    pendingSuperAdminCreation.email,
+                    pendingSuperAdminCreation.password,
+                    pendingSuperAdminCreation.displayName,
+                    pendingSuperAdminCreation.roleId,
+                  );
+                  setPendingSuperAdminCreation(null);
+                }}
+                className="bg-[var(--soc-yellow)] text-[#090d16] rounded-lg px-4 py-2 text-sm font-medium"
+              >
+                Confirm Creation
+              </button>
+              <button
+                onClick={() => setPendingSuperAdminCreation(null)}
+                className="bg-transparent border border-[var(--soc-border)] text-[var(--soc-subtext)] rounded-lg px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

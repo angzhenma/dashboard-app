@@ -26,5 +26,4 @@ A prototype Security Operations Center (SOC) dashboard built with **Vite + React
 
 ## Known Limitations / Next Steps
 
-- Add Super Admin role
-- Add option for users to sign up (should be held for review)
+- Actually fetch data from specified APIs (SentinelOne and Aruba Networking Central)
