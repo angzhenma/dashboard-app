@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { withSupabase } from '@supabase/server';
 
 interface CreateUserPayload {
   email: string;
@@ -7,90 +7,67 @@ interface CreateUserPayload {
   roleId: string;
 }
 
-function jsonResponse(body: unknown, status: number): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+export default {
+  fetch: withSupabase({ auth: "user" }, async (req, ctx) => {
+    if (req.method !== "POST") {
+      return Response.json({ error: "Method not allowed" }, { status: 405 });
+    }
 
-Deno.serve(async (req) => {
-  if (req.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
-  }
+    let payload: CreateUserPayload;
+    try {
+      payload = await req.json();
+    } catch {
+      return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
 
-  let payload: CreateUserPayload;
-  try {
-    payload = await req.json();
-  } catch {
-    return jsonResponse({ error: "Invalid JSON body" }, 400);
-  }
+    const { email, password, displayName, roleId } = payload;
+    if (!email || !password || !displayName || !roleId) {
+      return Response.json(
+        { error: "email, password, displayName, and roleId are all required" },
+        { status: 400 },
+      );
+    }
+    if (password.length < 8) {
+      return Response.json(
+        { error: "Password must be at least 8 characters." },
+        { status: 400 },
+      );
+    }
 
-  const { email, password, displayName, roleId } = payload;
-  if (!email || !password || !displayName || !roleId) {
-    return jsonResponse(
-      { error: "email, password, displayName, and roleId are all required" },
-      400,
-    );
-  }
-  if (password.length < 8) {
-    return jsonResponse({ error: "Password must be at least 8 characters." }, 400);
-  }
+    const { data: isSuperAdmin, error: superAdminError } =
+      await ctx.supabase.rpc("current_user_is_super_admin");
 
-  const authHeader = req.headers.get("Authorization");
-  if (!authHeader) {
-    return jsonResponse({ error: "Missing Authorization header" }, 401);
-  }
+    if (superAdminError || !isSuperAdmin) {
+      return Response.json(
+        { error: "Only super admins can create users" },
+        { status: 403 },
+      );
+    }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { data: created, error: createError } =
+      await ctx.supabaseAdmin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { display_name: displayName },
+      });
 
-  const callerClient = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-  });
+    if (createError || !created.user) {
+      return Response.json(
+        { error: createError?.message ?? "Failed to create user" },
+        { status: 400 },
+      );
+    }
 
-  const {
-    data: { user: callerUser },
-    error: callerError,
-  } = await callerClient.auth.getUser();
+    const { error: roleError } = await ctx.supabaseAdmin
+      .from("profiles")
+      .update({ role_id: roleId }) //TODO: figure out why theere is a data type mismatch despite the types being explicitly stated correctly
+      .eq("id", created.user.id);
 
-  if (callerError || !callerUser) {
-    return jsonResponse({ error: "Invalid session" }, 401);
-  }
+    if (roleError) {
+      return Response.json({ error: roleError.message }, { status: 500 });
+    }
 
-  const { data: isSuperAdmin, error: superAdminError } = await callerClient.rpc(
-    "current_user_is_super_admin",
-  );
-
-  if (superAdminError || !isSuperAdmin) {
-    return jsonResponse({ error: "Only super admins can create users" }, 403);
-  }
-
-  const adminClient = createClient(supabaseUrl, serviceRoleKey);
-
-  const { data: created, error: createError } = await adminClient.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-    user_metadata: { display_name: displayName },
-  });
-
-  if (createError || !created.user) {
-    return jsonResponse(
-      { error: createError?.message ?? "Failed to create user" },
-      400,
-    );
-  }
-
-  const { error: roleError } = await adminClient
-    .from("profiles")
-    .update({ role_id: roleId })
-    .eq("id", created.user.id);
-
-  if (roleError) {
-    return jsonResponse({ error: roleError.message }, 500);
-  }
-
-  return jsonResponse({ id: created.user.id }, 200);
-});
+    return Response.json({ id: created.user.id }, { status: 200 });
+  }),
+};
