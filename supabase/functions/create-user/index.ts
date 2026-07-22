@@ -61,7 +61,7 @@ export default {
 
     const { error: roleError } = await ctx.supabaseAdmin
       .from("profiles")
-      .update({ role_id: roleId }) //TODO: figure out why theere is a data type mismatch despite the types being explicitly stated correctly
+      .update({ role_id: roleId } as never)
       .eq("id", created.user.id);
 
     if (roleError) {
