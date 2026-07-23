@@ -4,7 +4,7 @@ A prototype Security Operations Center (SOC) dashboard built with **Vite + React
 
  **Status:** Work in progress. See [Known Limitations / Next Steps](#known-limitations--next-steps) below.
 
- App may end up not used for initial use, in which case it can easily be pivoted and customized for a wider range of use cases.
+ This app is currently being made as a security dashboard but can easily be pivoted and customized for a wider range of use cases.
 
 ## Tech Stack
 
@@ -23,6 +23,7 @@ A prototype Security Operations Center (SOC) dashboard built with **Vite + React
 - **Responsive metric grid:** the cards use a CSS Grid with `auto-fit`/`minmax(280px, 1fr)`, so its internal columns respond to the card's width when resized.
 - **Profile editing:** users are able to customize their own display name and change their password in-app.
 - **User role assigning and creation:** this admin-only feature allows admin users to change any user's role and create new roles with custom persmissions.
+- **User creation:** this super-admin-only feature allows super admins to create users for the application and assign an existing role upon creation.
 
 ## Known Limitations / Next Steps
 
