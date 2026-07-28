@@ -1,0 +1,1 @@
+alter table public.threats drop constraint if exists threats_threat_type_check;
