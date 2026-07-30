@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+.env
+.env.local
+
 supabase/schedule_sentinelone_sync.sql
